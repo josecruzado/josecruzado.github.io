@@ -10,7 +10,10 @@
   .ui-box {
     @apply flex flex-none select-none items-center justify-center;
     @apply rounded-md outline-none;
-    background-color: hsl(0, 0%, 85.8%);
     border: 1px solid hsl(0, 0%, 78%);
+  }
+
+  .ui-box:hover{
+    cursor: pointer;
   }
 }

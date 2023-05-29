@@ -32,7 +32,7 @@ const Dock = () => {
         <DockContext.Provider value={{ hovered, width }}>
           <nav
             ref={ref}
-            className="bg-grid flex justify-center rounded-md p-4"
+            className="bg-grid flex justify-center rounded-md p-3"
             onMouseOver={() => setHovered(true)}
             onMouseOut={() => setHovered(false)}
           >

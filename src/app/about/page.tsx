@@ -1,6 +1,6 @@
 export default function Page() {
     return <>
-        <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-500 to-slate-800">
+        <div className="flex items-center justify-center h-screen bg-gradient-to-br">
             <div className="bg-white font-semibold text-center rounded-3xl border shadow-lg p-10 max-w-xs">
                 <img className="mb-3 w-32 h-32 rounded-full shadow-lg mx-auto" src="https://media.licdn.com/dms/image/C4D03AQEz056KuAkI4Q/profile-displayphoto-shrink_200_200/0/1627846133271?e=1691020800&v=beta&t=z6iyjg8GbLhddIUcsLOq8twKm3mKDK9prkd7dOccbJE" alt="product designer"></img>
                     <h1 className="text-lg text-gray-700"> Jose Cruzado </h1>
