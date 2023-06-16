@@ -77,8 +77,8 @@ const DockItem = ({ id, children, ...props }: DockItemProps) => {
           width: spring,
         }}
         whileHover={{
-          backgroundColor: 'hsl(209, 81.2%, 84.5%)',
-          borderColor: 'hsl(206, 81.9%, 65.3%)',
+          backgroundColor: 'hsl(180, 20%, 50%)',
+          borderColor: 'hsl(180, 20%, 50%)',
           boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
         }}
         whileTap={{ scale: opened ? 1 : 0.85 }}

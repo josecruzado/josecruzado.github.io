@@ -41,22 +41,21 @@ const Dock = () => {
                 <Link
                   className="relative flex h-full w-full items-center justify-center"
                   aria-label="Star this project on GitHub"
-                  href="/about"
+                  href="/"
                   rel="external nofollow noopener noreferrer"
                 >
                   <HomeIcon className="relative h-3/5 w-3/5" aria-hidden="true" />
                 </Link>
               </DockItem>
               <DockItem>
-                <a
+              <Link
                   className="relative flex h-full w-full items-center justify-center"
                   aria-label="Star this project on GitHub"
-                  href="https://github.com/josecruzado"
+                  href="/timeline"
                   rel="external nofollow noopener noreferrer"
-                  target="_blank"
                 >
                   <DevelopmentIcon className="relative h-3/5 w-3/5" aria-hidden="true" />
-                </a>
+                </Link>
               </DockItem>
               <DockItem>
                 <a
