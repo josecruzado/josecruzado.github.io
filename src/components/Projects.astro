@@ -1,0 +1,201 @@
+---
+// Projects component - Proyectos destacados
+const projects = [
+  {
+    title: 'ATM Authorization Platform',
+    description: 'Microservicios bancarios para operaciones ATM en tiempo real',
+    impact: 'Alta disponibilidad y trazabilidad transaccional',
+    tech: ['Spring Boot', 'Quarkus', 'Kafka', 'AKS', 'MongoDB'],
+    gradient: 'from-cyan-500 to-blue-500'
+  },
+  {
+    title: 'Credit & Risk Systems',
+    description: 'APIs y procesos de remediación de seguridad para Equifax LATAM',
+    impact: 'Cumplimiento de SLAs y reducción de vulnerabilidades críticas',
+    tech: ['Spring Boot', 'Fortify', 'AWS ECS', 'Docker', 'Oracle'],
+    gradient: 'from-blue-500 to-purple-500'
+  },
+  {
+    title: 'E-commerce Logistics Integrations',
+    description: 'Integración de microservicios con couriers para ZARA',
+    impact: 'Optimización de flujos logísticos internacionales',
+    tech: ['Spring Boot', 'OpenShift', 'MongoDB', 'Traffic Parrot'],
+    gradient: 'from-purple-500 to-pink-500'
+  }
+];
+---
+
+<!-- Projects -->
+<section id="proyectos" class="projects">
+  <div class="container">
+    <h2 class="section-title-center">
+      Proyectos Destacados
+      <span class="section-subtitle">Impacto Real</span>
+    </h2>
+
+    <div class="projects-grid">
+      {projects.map((project, index) => (
+        <div class="project-card">
+          <div class={`project-icon project-icon-${index + 1}`}>
+            💼
+          </div>
+          
+          <h3 class="project-title">{project.title}</h3>
+          <p class="project-description">{project.description}</p>
+          
+          <div class="project-impact">
+            {project.impact}
+          </div>
+          
+          <div class="project-tech">
+            {project.tech.map(tech => (
+              <span class="tech-tag">
+                {tech}
+              </span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+/* Projects Section */
+.projects {
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height para mejor soporte mobile */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+  background: linear-gradient(180deg, #374151 0%, #1f2937 50%, #000000 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  position: relative;
+  z-index: 10;
+  width: 100%;
+}
+
+.section-title-center {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 4rem;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.section-subtitle {
+  display: block;
+  font-size: 1.25rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+  font-weight: normal;
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.project-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: all 0.3s;
+}
+
+.project-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(6, 182, 212, 0.3);
+  transform: translateY(-0.5rem);
+}
+
+.project-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.project-icon-1 {
+  background: linear-gradient(135deg, #06b6d4, #3b82f6);
+}
+
+.project-icon-2 {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+}
+
+.project-icon-3 {
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+}
+
+.project-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  transition: color 0.3s;
+}
+
+.project-card:hover .project-title {
+  color: #06b6d4;
+}
+
+.project-description {
+  color: #9ca3af;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.project-impact {
+  margin-bottom: 1rem;
+  padding: 0.25rem 0.75rem;
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  border-radius: 50px;
+  color: #06b6d4;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.project-tech {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tech-tag {
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  color: #9ca3af;
+}
+
+/* Responsive Design */
+@media (min-width: 768px) {
+  .projects-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .projects-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+</style>
