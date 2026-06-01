@@ -1,5 +1,5 @@
 ---
-title: Remediación vulnerabilidades Fortify & Pentest 
+title: Remediación vulnerabilidades Fortify & Pentest
 client: Equifax Perú — Security Squad LATAM
 description: Remediación de vulnerabilidades críticas detectadas por Fortify y pentests en aplicaciones productivas de riesgo crediticio.
 challenge: Reducir riesgo en aplicaciones productivas con información sensible sin comprometer continuidad operativa.
