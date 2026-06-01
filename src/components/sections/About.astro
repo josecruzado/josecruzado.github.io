@@ -1,0 +1,154 @@
+---
+import Section from '../ui/Section.astro';
+---
+
+<Section id="sobre-mi" ariaLabel="Sobre mí">
+  <header class="about__header">
+    <p class="eyebrow">01 · Sobre mí</p>
+    <h2 class="about__heading display">
+      Diseño backend que <em>aguanta</em> producción.
+    </h2>
+  </header>
+
+  <div class="about__grid">
+    <div class="about__bio">
+      <p>
+        Soy <strong>José Cruzado</strong>, Senior Backend Java Developer basado en Lima, Perú. Más
+        de seis años construyendo microservicios para banca, riesgo crediticio, retail internacional
+        y plataformas internas de operación.
+      </p>
+      <p>
+        Especializado en <strong>Spring Boot</strong>, <strong>Quarkus</strong>
+        y arquitecturas event-driven con <strong>Kafka</strong>. Trabajo con contratos OpenAPI,
+        pipelines GitOps, despliegues cloud y estándares de seguridad para entornos productivos.
+      </p>
+    </div>
+  </div>
+
+  <dl class="about__metrics">
+    <div class="metric">
+      <dt class="metric__label">Años</dt>
+      <dd class="metric__value display">6+</dd>
+      <p class="metric__note">construyendo backend en producción</p>
+    </div>
+    <div class="metric">
+      <dt class="metric__label">Industrias</dt>
+      <dd class="metric__value display">4</dd>
+      <p class="metric__note">banca, riesgo, e-commerce, agroindustria</p>
+    </div>
+    <div class="metric">
+      <dt class="metric__label">Stack</dt>
+      <dd class="metric__value display">Java + JVM</dd>
+      <p class="metric__note">Spring · Quarkus · Kafka · AWS · Azure</p>
+    </div>
+  </dl>
+</Section>
+
+<style>
+  .about__header {
+    margin-bottom: var(--space-16);
+    max-width: 48rem;
+  }
+
+  .about__heading {
+    font-size: var(--text-4xl);
+    line-height: 1.05;
+    margin-top: var(--space-4);
+  }
+
+  .about__heading em {
+    font-style: italic;
+    color: var(--color-accent);
+  }
+
+  .about__grid {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: var(--space-20);
+  }
+
+  .about__bio {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    font-size: var(--text-lg);
+    color: var(--color-fg-muted);
+    line-height: var(--leading-relaxed);
+    max-width: 46rem;
+  }
+
+  .about__bio strong {
+    color: var(--color-fg);
+    font-weight: var(--weight-semibold);
+  }
+
+  .about__metrics {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-12);
+    border-top: 1px solid var(--color-border);
+    padding-top: var(--space-12);
+  }
+
+  .metric {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .metric__label {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--color-fg-subtle);
+  }
+
+  .metric__value {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    line-height: 1;
+    color: var(--color-fg);
+    margin: 0;
+  }
+
+  .metric__note {
+    font-size: var(--text-sm);
+    color: var(--color-fg-subtle);
+    line-height: var(--leading-snug);
+  }
+
+  @media (min-width: 760px) {
+    .about__metrics {
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-8);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .about__header {
+      margin-bottom: var(--space-8);
+    }
+
+    .about__heading {
+      font-size: var(--text-3xl);
+    }
+
+    .about__grid {
+      margin-bottom: var(--space-12);
+    }
+
+    .about__bio {
+      font-size: var(--text-base);
+      line-height: var(--leading-normal);
+    }
+
+    .about__metrics {
+      gap: var(--space-8);
+      padding-top: var(--space-8);
+    }
+
+    .metric__value {
+      font-size: 2.35rem;
+    }
+  }
+</style>

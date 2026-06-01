@@ -1,18 +1,20 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import FloatingNav from '../components/FloatingNav.astro';
-import Hero from '../components/Hero.astro';
-import About from '../components/About.astro';
-import Experience from '../components/Experience.astro';
-import Projects from '../components/Projects.astro';
-import Contact from '../components/Contact.astro';
+import PageLayout from '../layouts/PageLayout.astro';
+import Hero from '../components/sections/Hero.astro';
+import About from '../components/sections/About.astro';
+import Experience from '../components/sections/Experience.astro';
+import Projects from '../components/sections/Projects.astro';
+import Skills from '../components/sections/Skills.astro';
+import Education from '../components/sections/Education.astro';
+import Contact from '../components/sections/Contact.astro';
 ---
 
-<Layout title="Jose Cruzado - Backend Developer">
-  <FloatingNav />
+<PageLayout type="profile">
   <Hero />
   <About />
   <Experience />
   <Projects />
+  <Skills />
+  <Education />
   <Contact />
-</Layout>
+</PageLayout>

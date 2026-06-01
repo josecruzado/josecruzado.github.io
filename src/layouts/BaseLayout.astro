@@ -1,0 +1,130 @@
+---
+/**
+ * BaseLayout — esqueleto HTML mínimo.
+ * Compone <head> con SEO + JSON-LD y aplica el theme antes del primer paint.
+ */
+import '../styles/global.css';
+import SEO from '../components/seo/SEO.astro';
+import JsonLd from '../components/seo/JsonLd.astro';
+import { SITE } from '../lib/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  canonical?: string;
+  type?: 'website' | 'article' | 'profile';
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = SITE.seo.defaultDescription,
+  image,
+  canonical,
+  type = 'profile',
+  noindex = false,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es" data-theme="dark">
+  <head>
+    <SEO
+      title={title}
+      description={description}
+      image={image}
+      canonical={canonical}
+      type={type}
+      noindex={noindex}
+    />
+    <JsonLd />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- Theme inicial aplicado antes del primer paint para evitar FOUC -->
+    <script is:inline>
+      (() => {
+        try {
+          const saved = localStorage.getItem('theme');
+          const prefers = window.matchMedia('(prefers-color-scheme: light)').matches
+            ? 'light'
+            : 'dark';
+          document.documentElement.dataset.theme = saved || prefers;
+        } catch (_) {
+          /* SSR/no-storage: usa el default del HTML */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="ambient-bg" aria-hidden="true"></div>
+    <a href="#main" class="skip-link">Saltar al contenido</a>
+    <slot />
+
+    <script>
+      const rootElement = document.documentElement;
+      const canTrackPointer =
+        window.matchMedia('(pointer: fine)').matches &&
+        !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      if (canTrackPointer) {
+        let pointerFrame = 0;
+        let pointerX = window.innerWidth * 0.72;
+        let pointerY = window.innerHeight * 0.28;
+
+        window.addEventListener(
+          'pointermove',
+          (event) => {
+            pointerX = event.clientX;
+            pointerY = event.clientY;
+
+            if (pointerFrame) return;
+            pointerFrame = requestAnimationFrame(() => {
+              rootElement.style.setProperty('--ambient-x', `${pointerX}px`);
+              rootElement.style.setProperty('--ambient-y', `${pointerY}px`);
+              pointerFrame = 0;
+            });
+          },
+          { passive: true }
+        );
+      }
+
+      // Intersection Observer para revelar elementos al hacer scroll
+      const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1,
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-revealed');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, observerOptions);
+
+      // Observamos todas las secciones principales y tarjetas
+      document.addEventListener('astro:page-load', () => {
+        document
+          .querySelectorAll(
+            '.project, .experience-item, .hero__title, .hero__statement, .hero__actions'
+          )
+          .forEach((el) => {
+            el.classList.add('reveal-element');
+            observer.observe(el);
+          });
+      });
+
+      // Fallback para cuando no hay view transitions
+      document
+        .querySelectorAll(
+          '.project, .experience-item, .hero__title, .hero__statement, .hero__actions'
+        )
+        .forEach((el) => {
+          el.classList.add('reveal-element');
+          observer.observe(el);
+        });
+    </script>
+  </body>
+</html>

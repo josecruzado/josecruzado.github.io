@@ -1,0 +1,287 @@
+---
+import Section from '../ui/Section.astro';
+import Icon from '../ui/Icon.astro';
+import { SITE } from '../../lib/site';
+
+const emailAddress = SITE.author.email;
+
+const links = [
+  {
+    label: 'Email',
+    value: emailAddress,
+    href: SITE.social.email,
+    icon: 'lucide:mail',
+    external: false,
+  },
+  {
+    label: 'LinkedIn',
+    value: 'in/josecruzado12',
+    href: SITE.social.linkedin,
+    icon: 'simple-icons:linkedin',
+    external: true,
+  },
+  {
+    label: 'GitHub',
+    value: 'github.com/josecruzado',
+    href: SITE.social.github,
+    icon: 'simple-icons:github',
+    external: true,
+  },
+];
+---
+
+<Section id="contacto" fullHeight ariaLabel="Contacto">
+  <div class="contact">
+    <p class="eyebrow">06 · Contacto</p>
+
+    <h2 class="contact__question">
+      ¿Construyamos<br />algo <em>juntos</em>?
+    </h2>
+
+    <p class="contact__statement">
+      Disponible para conversar sobre roles backend senior, plataformas JVM en producción y retos de
+      arquitectura para sistemas críticos.
+    </p>
+
+    <div class="contact__primary">
+      <a class="contact__button" href={SITE.social.email}>
+        <Icon name="lucide:send" size={17} />
+        Enviar email
+      </a>
+      <button
+        class="contact__button contact__button--secondary"
+        type="button"
+        data-copy-email={emailAddress}
+      >
+        <Icon name="lucide:copy" size={17} />
+        Copiar correo
+      </button>
+      <span class="contact__copy-status" data-copy-status aria-live="polite"></span>
+    </div>
+
+    <ul class="contact__links" role="list">
+      {
+        links.map((link) => (
+          <li>
+            <a
+              class="contact__link"
+              href={link.href}
+              target={link.external ? '_blank' : undefined}
+              rel={link.external ? 'noopener me' : undefined}
+            >
+              <span class="contact__link-label">{link.label}</span>
+              <span class="contact__link-value">
+                <Icon name={link.icon} size={18} />
+                <span>{link.value}</span>
+              </span>
+              <Icon name="lucide:arrow-up-right" size={20} class="contact__link-arrow" />
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</Section>
+
+<script>
+  const copyButton = document.querySelector<HTMLButtonElement>('[data-copy-email]');
+  const copyStatus = document.querySelector<HTMLElement>('[data-copy-status]');
+
+  copyButton?.addEventListener('click', async () => {
+    const emailAddress = copyButton.dataset.copyEmail;
+    if (!emailAddress) return;
+
+    try {
+      await navigator.clipboard.writeText(emailAddress);
+      if (copyStatus) copyStatus.textContent = 'Correo copiado';
+    } catch {
+      if (copyStatus) copyStatus.textContent = emailAddress;
+    }
+  });
+</script>
+
+<style>
+  .contact {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    max-width: 56rem;
+    width: 100%;
+    padding-block: var(--space-12);
+  }
+
+  .contact__question {
+    font-family: var(--font-sans);
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: var(--weight-semibold);
+    line-height: 0.95;
+    letter-spacing: 0;
+    margin: 0;
+  }
+
+  .contact__question em {
+    font-style: italic;
+    color: var(--color-accent);
+  }
+
+  .contact__statement {
+    font-size: var(--text-lg);
+    color: var(--color-fg-muted);
+    max-width: 32rem;
+    line-height: var(--leading-normal);
+  }
+
+  .contact__primary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .contact__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 2.75rem;
+    padding-inline: var(--space-5);
+    border-radius: var(--radius-md);
+    background: var(--color-accent);
+    color: #001014;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    border: 1px solid transparent;
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out);
+  }
+
+  .contact__button:hover {
+    background: #22d3ee;
+  }
+
+  .contact__button--secondary {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+    color: var(--color-fg);
+  }
+
+  .contact__button--secondary:hover {
+    background: var(--color-surface-hover);
+    border-color: var(--color-border-strong);
+  }
+
+  .contact__copy-status {
+    min-height: 1.4em;
+    color: var(--color-fg-subtle);
+    font-size: var(--text-sm);
+  }
+
+  .contact__links {
+    margin-top: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .contact__link {
+    display: grid;
+    grid-template-columns: 8rem 1fr auto;
+    align-items: center;
+    gap: var(--space-6);
+    padding-block: var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-fg);
+    transition:
+      padding var(--duration-base) var(--ease-out),
+      color var(--duration-base) var(--ease-out);
+  }
+
+  .contact__link:hover {
+    color: var(--color-accent);
+    padding-inline: var(--space-2) 0;
+  }
+
+  .contact__link-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--color-fg-subtle);
+  }
+
+  .contact__link:hover .contact__link-label {
+    color: var(--color-accent);
+  }
+
+  .contact__link-value {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--text-xl);
+    font-weight: var(--weight-medium);
+  }
+
+  .contact__link-arrow {
+    color: var(--color-fg-subtle);
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+  .contact__link:hover .contact__link-arrow {
+    transform: translate(2px, -2px);
+    color: var(--color-accent);
+  }
+
+  @media (max-width: 640px) {
+    .contact {
+      gap: var(--space-5);
+      padding-block: var(--space-20) var(--space-10);
+    }
+
+    .contact__question {
+      max-width: 100%;
+      font-size: clamp(2.15rem, 11vw, 3rem);
+      line-height: 1;
+      overflow-wrap: anywhere;
+      text-wrap: balance;
+    }
+
+    .contact__statement {
+      font-size: var(--text-base);
+    }
+
+    .contact__primary {
+      align-items: stretch;
+    }
+
+    .contact__button {
+      width: 100%;
+      min-height: 2.9rem;
+    }
+
+    .contact__copy-status {
+      width: 100%;
+    }
+
+    .contact__link {
+      grid-template-columns: 1fr auto;
+      gap: var(--space-2);
+      padding-block: var(--space-4);
+    }
+
+    .contact__link-label {
+      grid-column: 1 / -1;
+      margin-bottom: var(--space-1);
+    }
+
+    .contact__link-value {
+      font-size: var(--text-base);
+      min-width: 0;
+    }
+
+    .contact__link-value span {
+      overflow-wrap: anywhere;
+    }
+  }
+</style>

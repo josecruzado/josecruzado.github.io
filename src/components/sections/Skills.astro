@@ -1,0 +1,175 @@
+---
+import Section from '../ui/Section.astro';
+import Icon from '../ui/Icon.astro';
+import { SKILLS } from '../../lib/skills';
+---
+
+<Section id="habilidades" ariaLabel="Habilidades">
+  <header class="section-header">
+    <p class="eyebrow">04 · Habilidades</p>
+    <h2 class="section-heading display">
+      Herramientas y lenguajes en producción para sistemas escalables.
+    </h2>
+  </header>
+
+  <div class="skills-layout">
+    {
+      SKILLS.map((category) => (
+        <div class="skill-category">
+          <div class="skill-category__header">
+            <span class="skill-category__icon">
+              <Icon name={category.icon} size={18} />
+            </span>
+            <h3 class="skill-category__title">{category.name}</h3>
+          </div>
+
+          <div class="skill-category__items">
+            {category.skills.map((skill) => (
+              <div class="skill-item">
+                {skill.icon && <Icon name={skill.icon} size={16} class="skill-item__icon" />}
+                <span class="skill-item__name">{skill.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</Section>
+
+<style>
+  .section-header {
+    margin-bottom: var(--space-12);
+    max-width: 48rem;
+  }
+
+  .section-heading {
+    font-size: var(--text-3xl);
+    line-height: 1.1;
+    margin-top: var(--space-4);
+  }
+
+  .skills-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-10);
+    border-left: 1px solid var(--color-border);
+    padding-left: var(--space-6);
+  }
+
+  .skill-category {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    position: relative;
+  }
+
+  .skill-category::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--space-6) * -1 - 4px);
+    top: 0.4rem;
+    width: 8px;
+    height: 8px;
+    background: var(--color-bg);
+    border: 2px solid var(--color-accent);
+    border-radius: 50%;
+  }
+
+  .skill-category__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .skill-category__icon {
+    color: var(--color-accent);
+    display: flex;
+  }
+
+  .skill-category__title {
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    font-family: var(--font-display);
+    color: var(--color-fg);
+  }
+
+  .skill-category__items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3) var(--space-6);
+  }
+
+  .skill-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .skill-item:hover {
+    color: var(--color-fg);
+  }
+
+  .skill-item__icon {
+    opacity: 0.7;
+    transition: opacity var(--duration-fast) var(--ease-out);
+  }
+
+  .skill-item:hover .skill-item__icon {
+    opacity: 1;
+    color: var(--color-accent);
+  }
+
+  @media (min-width: 768px) {
+    .skills-layout {
+      grid-template-columns: repeat(2, 1fr);
+      border-left: none;
+      padding-left: 0;
+      gap: var(--space-12) var(--space-8);
+    }
+
+    .skill-category::before {
+      display: none;
+    }
+
+    .skill-category {
+      border-top: 1px solid var(--color-border);
+      padding-top: var(--space-6);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .section-header {
+      margin-bottom: var(--space-8);
+    }
+
+    .section-heading {
+      font-size: var(--text-2xl);
+    }
+
+    .skills-layout {
+      gap: var(--space-8);
+      padding-left: var(--space-5);
+    }
+
+    .skill-category__title {
+      font-size: var(--text-sm);
+    }
+
+    .skill-category__items {
+      gap: var(--space-2);
+    }
+
+    .skill-item {
+      padding: 0.35rem 0.55rem;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      font-size: var(--text-xs);
+    }
+  }
+</style>

@@ -1,0 +1,507 @@
+---
+import { getCollection } from 'astro:content';
+import Section from '../ui/Section.astro';
+import Icon from '../ui/Icon.astro';
+
+const experiences = (await getCollection('experience')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<Section id="experiencia" ariaLabel="Experiencia">
+  <header class="exp__header">
+    <p class="eyebrow">02 · Trayectoria</p>
+    <h2 class="exp__heading display">
+      Seis años entregando<br /><em>backend</em> que importa.
+    </h2>
+  </header>
+
+  <div class="exp" data-experience>
+    <ol class="exp__list" role="tablist" aria-label="Experiencia profesional">
+      {
+        experiences.map((job, i) => (
+          <li>
+            <button
+              type="button"
+              class={`exp__tab ${i === 0 ? 'is-active' : ''}`}
+              data-exp-tab={job.id}
+              aria-selected={i === 0}
+              aria-controls={`exp-panel-${job.id}`}
+              id={`exp-tab-${job.id}`}
+              role="tab"
+            >
+              <span class="exp__tab-period">{job.data.period}</span>
+              <span class="exp__tab-company">{job.data.company}</span>
+              <span class="exp__tab-role">{job.data.role}</span>
+              <Icon name="lucide:arrow-right" size={14} class="exp__tab-arrow" />
+            </button>
+          </li>
+        ))
+      }
+    </ol>
+
+    <div class="exp__panels">
+      {
+        experiences.map((job, i) => (
+          <article
+            class={`exp__panel ${i === 0 ? 'is-active' : ''}`}
+            data-exp-panel={job.id}
+            id={`exp-panel-${job.id}`}
+            role="tabpanel"
+            aria-labelledby={`exp-tab-${job.id}`}
+            hidden={i !== 0}
+          >
+            <header class="exp__panel-header">
+              <p class="exp__panel-meta">
+                <span>{job.data.location}</span>
+                <span aria-hidden="true">·</span>
+                <span>{job.data.period}</span>
+              </p>
+              <h3 class="exp__panel-title">{job.data.role}</h3>
+              <p class="exp__panel-company">
+                {job.data.company}
+                {job.data.client && (
+                  <>
+                    <span class="exp__panel-separator" aria-hidden="true">
+                      /
+                    </span>
+                    {job.data.client}
+                  </>
+                )}
+              </p>
+            </header>
+
+            <p class="exp__panel-summary">{job.data.summary}</p>
+
+            <ul class="exp__achievements" role="list">
+              {job.data.achievements.slice(0, 4).map((a) => (
+                <li>{a}</li>
+              ))}
+            </ul>
+
+            <footer class="exp__panel-footer">
+              <p class="exp__panel-stack-label">Stack</p>
+              <p class="exp__panel-stack">{job.data.technologies.join(' · ')}</p>
+            </footer>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</Section>
+
+<script>
+  function setupExperienceTabs() {
+    const root = document.querySelector('[data-experience]');
+    if (!root) return;
+
+    // Prevent duplicate event listeners on view transitions
+    if (root.hasAttribute('data-setup')) return;
+    root.setAttribute('data-setup', 'true');
+
+    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-exp-tab]'));
+    const panels = Array.from(root.querySelectorAll('[data-exp-panel]'));
+
+    function activateTab(tab: HTMLButtonElement, shouldFocus = false) {
+      const slug = tab.getAttribute('data-exp-tab');
+
+      tabs.forEach((t) => {
+        const isActive = t === tab;
+        t.classList.toggle('is-active', isActive);
+        t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        t.setAttribute('tabindex', isActive ? '0' : '-1');
+      });
+
+      panels.forEach((p) => {
+        const isActive = p.getAttribute('data-exp-panel') === slug;
+        p.classList.toggle('is-active', isActive);
+        if (isActive) {
+          p.removeAttribute('hidden');
+        } else {
+          p.setAttribute('hidden', '');
+        }
+      });
+
+      if (shouldFocus) tab.focus();
+    }
+
+    tabs.forEach((tab) => {
+      tab.setAttribute('tabindex', tab.classList.contains('is-active') ? '0' : '-1');
+    });
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', (e) => {
+        e.preventDefault();
+        activateTab(tab);
+      });
+
+      tab.addEventListener('keydown', (e) => {
+        const current = tabs.indexOf(tab);
+        const last = tabs.length - 1;
+        const nextIndex =
+          e.key === 'ArrowDown' || e.key === 'ArrowRight'
+            ? current === last
+              ? 0
+              : current + 1
+            : e.key === 'ArrowUp' || e.key === 'ArrowLeft'
+              ? current === 0
+                ? last
+                : current - 1
+              : e.key === 'Home'
+                ? 0
+                : e.key === 'End'
+                  ? last
+                  : -1;
+
+        if (nextIndex === -1) return;
+        e.preventDefault();
+        activateTab(tabs[nextIndex], true);
+      });
+    });
+  }
+
+  // Setup on initial load
+  setupExperienceTabs();
+
+  // Setup if view transitions are used
+  document.addEventListener('astro:page-load', setupExperienceTabs);
+</script>
+
+<style>
+  .exp__header {
+    margin-bottom: var(--space-16);
+    max-width: 48rem;
+  }
+
+  .exp__heading {
+    font-size: var(--text-4xl);
+    line-height: 1.05;
+    margin-top: var(--space-4);
+  }
+
+  .exp__heading em {
+    font-style: italic;
+    color: var(--color-accent);
+  }
+
+  .exp {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-12);
+    align-items: start;
+    min-width: 0;
+  }
+
+  /* ----------- Tabs (master) */
+  .exp__list {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--color-border);
+    list-style: none;
+  }
+
+  .exp__tab {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    column-gap: var(--space-4);
+    row-gap: 0.2rem;
+    width: 100%;
+    padding: var(--space-5) 0;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-fg-muted);
+    text-align: left;
+    background: transparent;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    cursor: pointer;
+    transition: all var(--duration-base) var(--ease-out);
+  }
+
+  @media (min-width: 640px) {
+    .exp__tab {
+      grid-template-columns: 7rem 1fr auto;
+      row-gap: 0.1rem;
+    }
+  }
+
+  .exp__tab:hover {
+    color: var(--color-fg);
+    padding-left: var(--space-3);
+  }
+
+  .exp__tab.is-active {
+    color: var(--color-fg);
+    padding-left: var(--space-3);
+    border-left: 2px solid var(--color-accent);
+  }
+
+  .exp__tab-period {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-fg-subtle);
+    grid-column: 1 / -1;
+    margin-bottom: 0.2rem;
+  }
+
+  @media (min-width: 640px) {
+    .exp__tab-period {
+      grid-column: 1;
+      grid-row: 1 / 3;
+      align-self: center;
+      margin-bottom: 0;
+    }
+  }
+
+  .exp__tab-company {
+    grid-column: 1;
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    line-height: 1.2;
+  }
+
+  @media (min-width: 640px) {
+    .exp__tab-company {
+      grid-column: 2;
+    }
+  }
+
+  .exp__tab-role {
+    grid-column: 1;
+    font-size: var(--text-sm);
+    color: var(--color-fg-subtle);
+    line-height: 1.3;
+  }
+
+  @media (min-width: 640px) {
+    .exp__tab-role {
+      grid-column: 2;
+    }
+  }
+
+  .exp__tab-arrow {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    opacity: 0;
+    transition: opacity var(--duration-base) var(--ease-out);
+    color: var(--color-accent);
+    justify-self: end;
+  }
+
+  @media (min-width: 640px) {
+    .exp__tab-arrow {
+      grid-column: 3;
+    }
+  }
+  .exp__tab.is-active .exp__tab-arrow,
+  .exp__tab:hover .exp__tab-arrow {
+    opacity: 1;
+  }
+
+  /* ----------- Panel (detail) */
+  .exp__panel {
+    display: none;
+    flex-direction: column;
+    gap: var(--space-6);
+    padding: var(--space-8) 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .exp__panel.is-active {
+    display: flex;
+    animation: panel-in var(--duration-slow) var(--ease-out);
+  }
+
+  @keyframes panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .exp__panel-meta {
+    display: flex;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-fg-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .exp__panel-title {
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-semibold);
+    margin-top: var(--space-2);
+    line-height: 1.15;
+  }
+
+  .exp__panel-company {
+    color: var(--color-accent);
+    font-weight: var(--weight-medium);
+    margin-top: var(--space-1);
+  }
+
+  .exp__panel-separator {
+    color: var(--color-fg-faint);
+    margin-inline: var(--space-2);
+  }
+
+  .exp__panel-summary {
+    color: var(--color-fg-muted);
+    line-height: var(--leading-normal);
+  }
+
+  .exp__achievements {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .exp__achievements li {
+    position: relative;
+    padding-left: var(--space-5);
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    line-height: var(--leading-normal);
+  }
+
+  .exp__achievements li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 0.6rem;
+    height: 1px;
+    background: var(--color-accent);
+  }
+
+  .exp__panel-footer {
+    margin-top: var(--space-2);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .exp__panel-stack-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--color-fg-subtle);
+    margin-bottom: var(--space-2);
+  }
+
+  .exp__panel-stack {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-fg-muted);
+    line-height: 1.7;
+    word-spacing: 0.2em;
+  }
+
+  @media (min-width: 900px) {
+    .exp {
+      grid-template-columns: 1fr 1.5fr;
+      gap: var(--space-16);
+    }
+    .exp__panels {
+      position: sticky;
+      top: var(--space-24);
+    }
+    .exp__panel {
+      padding: 0;
+      border-top: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .exp__header {
+      margin-bottom: var(--space-8);
+    }
+
+    .exp__heading {
+      font-size: var(--text-3xl);
+    }
+
+    .exp {
+      gap: var(--space-8);
+    }
+
+    .exp__list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      overflow: visible;
+      padding: 0;
+      border-top: 0;
+      max-width: 100%;
+      list-style: none;
+    }
+
+    .exp__list li {
+      min-width: 0;
+      list-style: none;
+    }
+
+    .exp__tab {
+      min-height: auto;
+      padding: var(--space-4);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-surface);
+      overflow: hidden;
+    }
+
+    .exp__tab:hover,
+    .exp__tab.is-active {
+      padding-left: var(--space-4);
+    }
+
+    .exp__tab.is-active {
+      border-left: 1px solid var(--color-accent-ring);
+      border-color: var(--color-accent-ring);
+      background: var(--color-surface-hover);
+    }
+
+    .exp__tab-period,
+    .exp__tab-company,
+    .exp__tab-role {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .exp__tab-period {
+      line-height: var(--leading-snug);
+      white-space: normal;
+    }
+
+    .exp__tab-company,
+    .exp__tab-role {
+      padding-right: var(--space-5);
+    }
+
+    .exp__panel {
+      gap: var(--space-5);
+      padding: 0;
+      border-top: 0;
+    }
+
+    .exp__panel-meta {
+      flex-wrap: wrap;
+      letter-spacing: 0.06em;
+    }
+
+    .exp__panel-title {
+      font-size: var(--text-xl);
+    }
+
+    .exp__achievements li {
+      padding-left: var(--space-4);
+    }
+  }
+</style>

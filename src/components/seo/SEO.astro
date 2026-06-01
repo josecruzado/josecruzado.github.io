@@ -1,0 +1,98 @@
+---
+/**
+ * SEO — meta tags, Open Graph, Twitter Cards, canonical, theme-color.
+ * Patrón Builder: recibe props y construye el árbol completo de <meta>.
+ */
+import { SITE } from '../../lib/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  canonical?: string;
+  type?: 'website' | 'article' | 'profile';
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = SITE.seo.defaultDescription,
+  image = SITE.seo.ogImage,
+  canonical,
+  type = 'profile',
+  noindex = false,
+} = Astro.props;
+
+const pageTitle = title ? SITE.seo.titleTemplate.replace('%s', title) : SITE.seo.defaultTitle;
+
+const canonicalUrl = canonical
+  ? new URL(canonical, SITE.url).href
+  : new URL(Astro.url.pathname, SITE.url).href;
+
+const imageUrl = new URL(image, SITE.url).href;
+const keywords = SITE.seo.keywords.join(', ');
+---
+
+<!-- Charset y viewport -->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+<!-- Title + description -->
+<title>{pageTitle}</title>
+<meta name="title" content={pageTitle} />
+<meta name="description" content={description} />
+<meta name="keywords" content={keywords} />
+<meta name="author" content={SITE.author.name} />
+
+<!-- Robots -->
+<meta
+  name="robots"
+  content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1'}
+/>
+<meta name="googlebot" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
+
+<!-- Canonical -->
+<link rel="canonical" href={canonicalUrl} />
+
+<!-- Theme color reactivo al esquema preferido -->
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content={SITE.seo.themeColorDark} />
+<meta name="theme-color" media="(prefers-color-scheme: light)" content={SITE.seo.themeColorLight} />
+<meta name="color-scheme" content="dark light" />
+
+<!-- Open Graph -->
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content={SITE.author.displayName} />
+<meta property="og:title" content={pageTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={imageUrl} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content={`${SITE.author.name} — ${SITE.author.role}`} />
+<meta property="og:url" content={canonicalUrl} />
+<meta property="og:locale" content={SITE.locale.replace('-', '_')} />
+{
+  type === 'profile' && (
+    <>
+      <meta property="profile:first_name" content={SITE.author.firstName} />
+      <meta property="profile:last_name" content={SITE.author.lastName} />
+      <meta property="profile:username" content="josecruzado" />
+    </>
+  )
+}
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={pageTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={imageUrl} />
+<meta name="twitter:image:alt" content={`${SITE.author.name} — ${SITE.author.role}`} />
+
+<!-- Favicons -->
+<link rel="icon" type="image/png" sizes="420x420" href="/apple-touch-icon.png" />
+<link rel="apple-touch-icon" sizes="420x420" href="/apple-touch-icon.png" />
+
+<!-- Sitemap discoverability -->
+<link rel="sitemap" type="application/xml" href="/sitemap-index.xml" />
+
+<!-- Hint para acelerar conexiones a recursos externos clave -->
+<link rel="preconnect" href="https://github.com" />

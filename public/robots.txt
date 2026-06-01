@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /404
+
+# Permite que los crawlers de IA descubran el portfolio
+User-agent: GPTBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+
+Sitemap: https://josecruzado.github.io/sitemap-index.xml

@@ -1,0 +1,41 @@
+---
+/**
+ * Section — wrapper semántico minimal.
+ * Sin eyebrow/subtitle por defecto; las secciones que quieran header
+ * lo construyen como contenido para evitar el patrón repetido.
+ */
+interface Props {
+  id: string;
+  ariaLabel?: string;
+  narrow?: boolean;
+  fullHeight?: boolean;
+  class?: string;
+}
+
+const { id, ariaLabel, narrow = false, fullHeight = false, class: className } = Astro.props;
+
+const containerClass = narrow ? 'container container--narrow' : 'container';
+const sectionClass = ['section', fullHeight && 'section--full', className]
+  .filter(Boolean)
+  .join(' ');
+---
+
+<section class={sectionClass} aria-label={ariaLabel} data-nav-section={id}>
+  <div id={id} class={containerClass}>
+    <slot />
+  </div>
+</section>
+
+<style>
+  .section {
+    padding-block: var(--section-padding);
+    position: relative;
+  }
+
+  .section--full {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+  }
+</style>

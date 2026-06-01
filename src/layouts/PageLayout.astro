@@ -1,0 +1,22 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import FloatingNav from '../components/nav/FloatingNav.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  canonical?: string;
+  type?: 'website' | 'article' | 'profile';
+  noindex?: boolean;
+}
+
+const props = Astro.props;
+---
+
+<BaseLayout {...props}>
+  <FloatingNav />
+  <main id="main">
+    <slot />
+  </main>
+</BaseLayout>

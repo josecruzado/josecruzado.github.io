@@ -1,0 +1,100 @@
+---
+/**
+ * JsonLd — Structured data Schema.org (@graph con Person + WebSite + ProfilePage).
+ * Validable en https://search.google.com/test/rich-results
+ */
+import { SITE } from '../../lib/site';
+
+const personId = `${SITE.url}/#person`;
+const websiteId = `${SITE.url}/#website`;
+const profileId = `${SITE.url}/#profile`;
+
+const skills = [
+  'Java',
+  'Spring Boot',
+  'Spring Framework',
+  'Quarkus',
+  'Microservices Architecture',
+  'REST API',
+  'OpenAPI 3.0',
+  'Apache Kafka',
+  'Event-Driven Architecture',
+  'AWS (ECS, ECR, Secrets Manager)',
+  'Azure AKS',
+  'Azure API Management',
+  'Docker',
+  'Kubernetes',
+  'Terraform',
+  'Jenkins',
+  'GoCD',
+  'GitOps',
+  'MongoDB',
+  'Oracle',
+  'Cosmos DB',
+  'Spring Security',
+  'JWT',
+  'SonarQube',
+  'Fortify',
+];
+
+const graph = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Person',
+      '@id': personId,
+      name: SITE.author.name,
+      givenName: SITE.author.firstName,
+      familyName: SITE.author.lastName,
+      alternateName: SITE.author.displayName,
+      jobTitle: SITE.author.role,
+      description: SITE.author.bio,
+      url: SITE.url,
+      image: new URL(SITE.seo.ogImage, SITE.url).href,
+      email: SITE.author.email,
+      telephone: SITE.author.phoneE164,
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: SITE.author.location.city,
+        addressCountry: SITE.author.location.countryCode,
+      },
+      worksFor: {
+        '@type': 'Organization',
+        name: 'Tata Consultancy Services',
+      },
+      alumniOf: {
+        '@type': 'CollegeOrUniversity',
+        name: SITE.author.university,
+      },
+      knowsAbout: skills,
+      knowsLanguage: SITE.author.languages.map((lang) => ({
+        '@type': 'Language',
+        name: lang.name,
+        alternateName: lang.code,
+      })),
+      sameAs: [SITE.social.linkedin, SITE.social.github],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': websiteId,
+      url: SITE.url,
+      name: `${SITE.author.displayName} · Portfolio`,
+      description: SITE.seo.defaultDescription,
+      inLanguage: SITE.locale,
+      publisher: { '@id': personId },
+    },
+    {
+      '@type': 'ProfilePage',
+      '@id': profileId,
+      url: SITE.url,
+      name: SITE.seo.defaultTitle,
+      description: SITE.seo.defaultDescription,
+      inLanguage: SITE.locale,
+      mainEntity: { '@id': personId },
+      isPartOf: { '@id': websiteId },
+    },
+  ],
+};
+---
+
+<script type="application/ld+json" is:inline set:html={JSON.stringify(graph)} />

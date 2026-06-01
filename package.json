@@ -6,19 +6,31 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "check": "astro check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "engines": {
+    "node": ">=22.12.0"
   },
   "dependencies": {
-    "@astrojs/react": "^5.0.5",
-    "@tailwindcss/vite": "^4.1.18",
-    "@types/react": "^19.2.8",
-    "@types/react-dom": "^19.2.3",
-    "astro": "^6.3.7",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "@astrojs/sitemap": "^3.7.3",
+    "@fontsource-variable/cascadia-code": "^5.2.2",
+    "@fontsource-variable/inter": "^5.2.8",
+    "@iconify-json/lucide": "^1.2.111",
+    "@iconify-json/simple-icons": "^1.2.84",
+    "astro": "^6.4.2",
+    "astro-icon": "^1.1.5"
   },
   "overrides": {
     "postcss": "^8.5.10",
     "rollup": "^4.59.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "prettier": "^3.8.3",
+    "prettier-plugin-astro": "^0.14.1",
+    "typescript": "^6.0.3"
   }
 }

@@ -1,0 +1,27 @@
+---
+/**
+ * Adapter sobre astro-icon. Centraliza el sistema de iconos
+ * para poder migrar de proveedor sin tocar consumidores.
+ */
+import { Icon as AstroIcon } from 'astro-icon/components';
+
+interface Props {
+  name: string;
+  size?: number | string;
+  label?: string;
+  class?: string;
+}
+
+const { name, size = 20, label, class: className } = Astro.props;
+const decorative = !label;
+---
+
+<AstroIcon
+  name={name}
+  width={size}
+  height={size}
+  class={className}
+  aria-hidden={decorative ? 'true' : undefined}
+  aria-label={label}
+  role={decorative ? undefined : 'img'}
+/>

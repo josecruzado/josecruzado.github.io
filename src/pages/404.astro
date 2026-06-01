@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/ui/Button.astro';
+import Icon from '../components/ui/Icon.astro';
+---
+
+<BaseLayout title="Página no encontrada" description="La página solicitada no existe." noindex>
+  <main id="main" class="notfound">
+    <div class="container notfound__inner">
+      <p class="notfound__code gradient-text">404</p>
+      <h1 class="notfound__title">Esta página no existe</h1>
+      <p class="notfound__subtitle">El recurso que buscas se ha movido o nunca estuvo aquí.</p>
+      <Button href="/" variant="primary" size="lg">
+        <Icon name="lucide:arrow-left" size={18} />
+        Volver al inicio
+      </Button>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .notfound {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+  }
+  .notfound__inner {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .notfound__code {
+    font-size: clamp(6rem, 20vw, 12rem);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.05em;
+  }
+  .notfound__title {
+    font-size: var(--text-3xl);
+    font-weight: 700;
+  }
+  .notfound__subtitle {
+    color: var(--color-fg-muted);
+    max-width: 32rem;
+    margin-bottom: var(--space-4);
+  }
+</style>

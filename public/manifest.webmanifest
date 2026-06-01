@@ -1,0 +1,20 @@
+{
+  "name": "José Cruzado · Senior Backend Java Developer",
+  "short_name": "JC Portfolio",
+  "description": "Portfolio de José Cruzado, Senior Backend Java Developer especializado en Spring Boot, Quarkus, Kafka y cloud.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#06b6d4",
+  "orientation": "portrait-primary",
+  "lang": "es-PE",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "420x420",
+      "purpose": "any"
+    }
+  ]
+}

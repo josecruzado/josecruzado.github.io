@@ -1,0 +1,102 @@
+---
+/**
+ * Button — átomo polimorfo.
+ * Variants:
+ *   - primary : acento sólido cyan (un solo CTA por viewport)
+ *   - secondary : outline neutro
+ *   - link : subrayado tipográfico (uso editorial)
+ */
+import type { HTMLAttributes } from 'astro/types';
+
+type Variant = 'primary' | 'secondary' | 'link';
+type Size = 'sm' | 'md' | 'lg';
+
+type Props = (HTMLAttributes<'a'> | HTMLAttributes<'button'>) & {
+  as?: 'a' | 'button';
+  variant?: Variant;
+  size?: Size;
+};
+
+const props = Astro.props;
+const {
+  as = 'a',
+  variant = 'primary',
+  size = 'md',
+  class: className,
+  ...rest
+} = props as Props & { class?: string };
+
+const Tag = as;
+const classes = ['btn', `btn--${variant}`, `btn--${size}`, className].filter(Boolean).join(' ');
+---
+
+<Tag class={classes} {...rest as Record<string, unknown>}>
+  <slot />
+</Tag>
+
+<style>
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-weight: var(--weight-medium);
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-out);
+    white-space: nowrap;
+  }
+
+  .btn:active {
+    transform: scale(0.96);
+  }
+
+  .btn--sm {
+    padding: 0.5rem 1.1rem;
+    font-size: var(--text-xs);
+  }
+  .btn--md {
+    padding: 0.7rem 1.5rem;
+    font-size: var(--text-sm);
+  }
+  .btn--lg {
+    padding: 0.95rem 1.8rem;
+    font-size: var(--text-sm);
+  }
+
+  .btn--primary {
+    background: var(--color-accent);
+    color: #001014;
+    box-shadow: 0 0 12px var(--color-accent-soft);
+  }
+  .btn--primary:hover {
+    background: #22d3ee;
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.4);
+  }
+
+  .btn--secondary {
+    background: var(--color-surface);
+    color: var(--color-fg);
+    border-color: var(--color-border);
+  }
+  .btn--secondary:hover {
+    background: var(--color-surface-hover);
+    border-color: var(--color-border-strong);
+  }
+
+  .btn--link {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--color-fg-muted);
+    font-weight: var(--weight-medium);
+    border-bottom: 1px solid transparent;
+  }
+  .btn--link:hover {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+</style>
