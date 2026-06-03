@@ -218,8 +218,23 @@ body {
 html.is-scrolling .hero__avatar,
 html.is-scrolling .hero__avatar-backdrop,
 html.is-scrolling .hero__status,
+html.is-scrolling .hero__status::before,
 html.is-scrolling .hero__scroll-line,
 html.is-scrolling .tech-glow::after {
+  animation-play-state: paused;
+}
+
+/* Page Visibility: cuando la pestaña queda oculta (document.hidden=true)
+   BaseLayout añade .is-page-hidden a <html>. Pausamos las animaciones
+   infinitas exactamente como en scroll. El browser ya pausa requestAnimation-
+   Frame por sí solo, pero las CSS animations siguen ejecutándose en
+   compositor — esta regla las congela explícitamente. */
+html.is-page-hidden .hero__avatar,
+html.is-page-hidden .hero__avatar-backdrop,
+html.is-page-hidden .hero__status,
+html.is-page-hidden .hero__status::before,
+html.is-page-hidden .hero__scroll-line,
+html.is-page-hidden .tech-glow::after {
   animation-play-state: paused;
 }
 

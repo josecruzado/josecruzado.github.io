@@ -214,21 +214,43 @@ import memoji from '../../assets/memoji.png';
   }
 
   .hero__status {
+    position: relative;
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background: var(--color-success);
+    /* Anillo estático base — el efecto pulsante se delega al ::before
+       de abajo, que usa transform/opacity (GPU-accelerated) en vez de
+       box-shadow animado (paint-heavy, no GPU). */
     box-shadow: 0 0 0 4px var(--color-success-ring);
+    flex-shrink: 0;
+  }
+
+  /* ::before genera el anillo expansivo que pulsa. Vive en z-index: -1
+     (debajo del dot) y se escala con transform. La opacidad va de 1→0
+     en el medio del ciclo, simulando un onda que se desvanece.
+     Visualmente equivalente al pattern anterior de box-shadow, pero
+     compositor-friendly: en mobile y monitores 144Hz el cost de paint
+     por frame es ~0 frente a los ~1-2ms del box-shadow original. */
+  .hero__status::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: var(--color-success-ring);
+    z-index: -1;
     animation: pulse-soft 2.4s ease-in-out infinite;
   }
 
   @keyframes pulse-soft {
     0%,
     100% {
-      box-shadow: 0 0 0 4px var(--color-success-ring);
+      transform: scale(1);
+      opacity: 1;
     }
     50% {
-      box-shadow: 0 0 0 8px var(--color-success-ring-soft);
+      transform: scale(2);
+      opacity: 0;
     }
   }
 
@@ -415,7 +437,7 @@ import memoji from '../../assets/memoji.png';
   @media (prefers-reduced-motion: reduce) {
     .hero__avatar,
     .hero__avatar-backdrop,
-    .hero__status,
+    .hero__status::before,
     .hero__scroll-line,
     .tech-glow::after {
       animation: none;

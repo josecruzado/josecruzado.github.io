@@ -194,6 +194,14 @@ const {
         { passive: true }
       );
 
+      // Page Visibility API: pausa las animaciones infinitas cuando la
+      // pestaña queda oculta (usuario en otra tab/ventana). Evita GPU
+      // activity sostenida sin observador → mejora battery life en
+      // mobile y libera ciclos en CPU/GPU para la tab activa.
+      document.addEventListener('visibilitychange', () => {
+        rootElement.classList.toggle('is-page-hidden', document.hidden);
+      });
+
       // IntersectionObserver para revelar tarjetas al scrollear.
       // El estado inicial oculto lo aplica .js-anim vía CSS (utilities.css),
       // antes del primer paint — sin FOUC y sin necesidad de inyectar
