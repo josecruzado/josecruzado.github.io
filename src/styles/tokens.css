@@ -5,10 +5,10 @@
    ============================================================= */
 
 :root {
-  /* Habilita la función light-dark() y permite que data-theme
-     coordine con el computed color-scheme. Cada [data-theme=*]
-     reasigna color-scheme abajo. */
-  color-scheme: light dark;
+  /* light-dark() requiere color-scheme declarado en el elemento.
+     Se setea por [data-theme='dark|light'] abajo (data-theme se
+     aplica pre-paint en el script inline de BaseLayout → siempre
+     hay un valor antes del primer render). */
 
   /* ---------- Acento único (estable entre temas) ---------- */
   --color-accent: #06b6d4;
@@ -19,7 +19,10 @@
 
   /* Status / availability */
   --color-success: #10b981;
-  --color-success-ring: rgba(16, 185, 129, 0.15);
+  /* Alpha 0.28 (was 0.15): el anillo es sutil pero claramente
+     perceptible sobre el bg dark (#050507) y light (#fafafa).
+     Mantiene la sensación "low-contrast decorativa" sin perderse. */
+  --color-success-ring: rgba(16, 185, 129, 0.28);
 
   /* Gradient — uso restringido a 1 elemento por viewport */
   --gradient-accent: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%);

@@ -95,10 +95,6 @@ const experiences = (await getCollection('experience')).sort((a, b) => a.data.or
     const root = document.querySelector('[data-experience]');
     if (!root) return;
 
-    // Prevent duplicate event listeners on view transitions
-    if (root.hasAttribute('data-setup')) return;
-    root.setAttribute('data-setup', 'true');
-
     const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-exp-tab]'));
     const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-exp-panel]'));
 
@@ -170,11 +166,7 @@ const experiences = (await getCollection('experience')).sort((a, b) => a.data.or
     });
   }
 
-  // Setup on initial load
   setupExperienceTabs();
-
-  // Setup if view transitions are used
-  document.addEventListener('astro:page-load', setupExperienceTabs);
 </script>
 
 <style>

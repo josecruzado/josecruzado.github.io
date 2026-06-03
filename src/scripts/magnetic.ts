@@ -1,16 +1,18 @@
 /**
- * Animaciones — magnetic hover en CTAs primarios.
+ * Magnetic hover — CTAs primarios (Descargar CV + Enviar email +
+ * dock CV + Contact links) siguen el cursor con una atracción sutil.
  *
- * Reemplazó la librería Motion (~30 KB gzipped) por CSS-first:
- *   - Hero entrance: @keyframes hero-stagger + animation-fill-mode:
- *     backwards en utilities.css (cero JS para entrance).
- *   - Card lift: .card:hover { translateY } en Card.astro (cero JS).
- *   - Magnetic: este archivo — minimal pointermove → CSS vars,
- *     transición vive en CSS (transición sobre `translate` property
- *     en utilities.css).
+ * Implementación: pointermove → setProperty --mx/--my. La transición
+ * y aplicación de `translate` viven en utilities.css. JS solo lee la
+ * posición del cursor y publica las CSS vars.
  *
- * Solo registra listeners cuando hay pointer:fine + no reduced-motion.
- * Cero work en mobile / touch / accesibilidad.
+ * Solo se ejecuta cuando hay pointer:fine + no reduced-motion. Cero
+ * work en mobile / touch / accesibilidad.
+ *
+ * Sister modules (también CSS-first, sin librerías):
+ *   - Hero entrance: @keyframes hero-stagger + backwards fill
+ *   - Card lift: .card:hover { translateY } (CSS only)
+ *   - Reveal-on-scroll: animation-timeline: view() (CSS only)
  */
 
 const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;

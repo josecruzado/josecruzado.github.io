@@ -2,20 +2,22 @@
 /**
  * Card — superficie elevada minimalista.
  *
- * Spotlight removido: estaba gated por `interactive` (cards con href),
- * pero ningún consumer actual del portfolio usa href en sus Cards
- * (Projects + Education son informativas). El código corría siempre
- * pero nunca se mostraba — dead code.
- *
- * El prop `interactive` se mantiene en la API por si futuras Cards
- * se convierten en clickeables (link de proyecto, ej.), aunque hoy
- * solo añade la clase para hover state.
+ * Hover lift universal (`@media (hover: hover) .card:hover { translateY }`)
+ * aplica a todas las cards. Spotlight removido (era dead code: gated por
+ * `interactive`, pero ningún consumer del portfolio usa href).
  */
 type Tag = 'div' | 'article' | 'li' | 'a';
 
 interface Props {
   as?: Tag;
   href?: string;
+  /**
+   * RESERVED — añade la clase `.card--interactive` pero hoy no aplica
+   * ningún estilo extra (el lift ya es universal). Reservado para futuras
+   * Cards clickeables (project con link público, ej.) que necesiten
+   * indicación visual de afordancia distinta — spotlight, cursor, etc.
+   * Default: `true` cuando se pasa `href`, `false` en otro caso.
+   */
   interactive?: boolean;
   class?: string;
   accent?: 'cyan' | 'blue' | 'purple' | 'pink' | 'orange' | 'green';
