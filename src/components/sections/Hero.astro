@@ -36,7 +36,9 @@ import memoji from '../../assets/memoji.png';
           SITE.stats.map((stat) => (
             <div class="hero__stat">
               <dt class="hero__stat-label">{stat.label}</dt>
-              <dd class="hero__stat-value">{stat.value}</dd>
+              <dd>
+                <span class="hero__stat-value">{stat.value}</span>
+              </dd>
             </div>
           ))
         }
@@ -344,6 +346,17 @@ import memoji from '../../assets/memoji.png';
     flex-direction: column-reverse;
     gap: var(--space-1);
     min-width: 0;
+  }
+
+  /* display: contents — la <dd> participa semánticamente en el <dl>
+     (par dt/dd válido para screen readers) pero NO genera caja propia.
+     El <span class="hero__stat-value"> hijo se convierte en flex item
+     directo de .hero__stat, heredando todos los estilos previos sin
+     reasignarlos. Baseline ampliamente disponible 2018+ (Chrome 65,
+     Safari 11.1, Firefox 37). */
+  .hero__stat dd {
+    display: contents;
+    margin: 0;
   }
 
   .hero__stat-value {
