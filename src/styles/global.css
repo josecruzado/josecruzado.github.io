@@ -280,3 +280,37 @@ html.is-scrolling .tech-glow::after {
     animation: none;
   }
 }
+
+/* =============================================================
+   prefers-contrast: more (WCAG 2.2 SC 1.4.6 — AAA, vigente 2025+).
+   Eleva el contraste de los grays muted/subtle/faint y de los borders
+   para usuarios que solicitan mayor diferenciación cromática. Solo
+   actúa cuando el usuario lo pide en el SO; resto ve la paleta normal.
+   ============================================================= */
+@media (prefers-contrast: more) {
+  :root {
+    --color-fg-muted: light-dark(#3f3f3f, #c4c4cc);
+    --color-fg-subtle: light-dark(#525252, #9999a3);
+    --color-fg-faint: light-dark(#6b6b6b, #7a7a82);
+    --color-border: light-dark(rgba(0, 0, 0, 0.18), rgba(255, 255, 255, 0.18));
+    --color-border-strong: light-dark(rgba(0, 0, 0, 0.28), rgba(255, 255, 255, 0.28));
+  }
+}
+
+/* =============================================================
+   prefers-reduced-data: reduce — usuarios con data saver / 2G.
+   Quita capas puramente decorativas (ambient bg, backdrop pulsante,
+   float animation del memoji) que consumen bandwidth indirectamente
+   vía GPU activity sostenida. La identidad visual del portfolio
+   se preserva — header, layout y contenido intactos.
+   Chromium 85+ / Edge 85+.
+   ============================================================= */
+@media (prefers-reduced-data: reduce) {
+  .ambient-bg,
+  .hero__avatar-backdrop {
+    display: none;
+  }
+  .hero__avatar {
+    animation: none;
+  }
+}
