@@ -2,40 +2,38 @@
 /**
  * JsonLd — Structured data Schema.org (@graph con Person + WebSite + ProfilePage).
  * Validable en https://search.google.com/test/rich-results
+ *
+ * `knowsAbout` se deriva de SKILLS para mantener una única fuente de verdad
+ * con la sección Habilidades.
  */
+import { getCollection } from 'astro:content';
 import { SITE } from '../../lib/site';
+import { SKILLS } from '../../lib/skills';
 
 const personId = `${SITE.url}/#person`;
 const websiteId = `${SITE.url}/#website`;
 const profileId = `${SITE.url}/#profile`;
 
-const skills = [
-  'Java',
-  'Spring Boot',
-  'Spring Framework',
-  'Quarkus',
-  'Microservices Architecture',
-  'REST API',
-  'OpenAPI 3.0',
-  'Apache Kafka',
-  'Event-Driven Architecture',
-  'AWS (ECS, ECR, Secrets Manager)',
-  'Azure AKS',
-  'Azure API Management',
-  'Docker',
-  'Kubernetes',
-  'Terraform',
-  'Jenkins',
-  'GoCD',
-  'GitOps',
-  'MongoDB',
-  'Oracle',
-  'Cosmos DB',
-  'Spring Security',
-  'JWT',
-  'SonarQube',
-  'Fortify',
-];
+const knowsAbout = SKILLS.flatMap((category) => category.skills.map((s) => s.name));
+
+const experiences = (await getCollection('experience')).sort((a, b) => a.data.order - b.data.order);
+const currentExperience = experiences.find((e) => e.data.isCurrent) ?? experiences[0];
+const worksForName = currentExperience?.data.company ?? 'Independent';
+
+// hasOccupation enriquece el rich snippet de Google con
+// responsibilities, location y categoría ocupacional estandarizada
+// (SOC code 15-1252.00 = Software Developers, Applications).
+const occupation = {
+  '@type': 'Occupation',
+  name: SITE.author.role,
+  occupationLocation: {
+    '@type': 'City',
+    name: `${SITE.author.location.city}, ${SITE.author.location.country}`,
+  },
+  skills: knowsAbout.join(', '),
+  responsibilities: SITE.author.bio,
+  occupationalCategory: '15-1252.00',
+};
 
 const graph = {
   '@context': 'https://schema.org',
@@ -60,13 +58,14 @@ const graph = {
       },
       worksFor: {
         '@type': 'Organization',
-        name: 'Tata Consultancy Services',
+        name: worksForName,
       },
       alumniOf: {
         '@type': 'CollegeOrUniversity',
         name: SITE.author.university,
       },
-      knowsAbout: skills,
+      hasOccupation: occupation,
+      knowsAbout,
       knowsLanguage: SITE.author.languages.map((lang) => ({
         '@type': 'Language',
         name: lang.name,

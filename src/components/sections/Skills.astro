@@ -1,16 +1,14 @@
 ---
 import Section from '../ui/Section.astro';
+import SectionHeader from '../ui/SectionHeader.astro';
 import Icon from '../ui/Icon.astro';
 import { SKILLS } from '../../lib/skills';
 ---
 
 <Section id="habilidades" ariaLabel="Habilidades">
-  <header class="section-header">
-    <p class="eyebrow">04 · Habilidades</p>
-    <h2 class="section-heading display">
-      Herramientas y lenguajes en producción para sistemas escalables.
-    </h2>
-  </header>
+  <SectionHeader eyebrow="04 · Habilidades" size="md">
+    Herramientas y lenguajes en producción para sistemas escalables.
+  </SectionHeader>
 
   <div class="skills-layout">
     {
@@ -38,17 +36,6 @@ import { SKILLS } from '../../lib/skills';
 </Section>
 
 <style>
-  .section-header {
-    margin-bottom: var(--space-12);
-    max-width: 48rem;
-  }
-
-  .section-heading {
-    font-size: var(--text-3xl);
-    line-height: 1.1;
-    margin-top: var(--space-4);
-  }
-
   .skills-layout {
     display: grid;
     grid-template-columns: 1fr;
@@ -143,17 +130,15 @@ import { SKILLS } from '../../lib/skills';
   }
 
   @media (max-width: 640px) {
-    .section-header {
-      margin-bottom: var(--space-8);
-    }
-
-    .section-heading {
-      font-size: var(--text-2xl);
-    }
-
     .skills-layout {
       gap: var(--space-8);
       padding-left: var(--space-5);
+    }
+
+    /* Realinear el dot del timeline con el border-left:
+       padding-left mobile es --space-5, no --space-6 como en desktop. */
+    .skill-category::before {
+      left: calc(var(--space-5) * -1 - 4px);
     }
 
     .skill-category__title {

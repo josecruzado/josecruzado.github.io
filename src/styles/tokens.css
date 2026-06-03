@@ -4,26 +4,53 @@
    se usa con extrema parquedad (solo focal points clave).
    ============================================================= */
 
+/* =============================================================
+   @property declarations — custom properties tipadas.
+   Permiten interpolación/animación y mejor DX en DevTools.
+   ============================================================= */
+@property --ambient-x {
+  syntax: '<length-percentage>';
+  inherits: true;
+  initial-value: 74vw;
+}
+@property --ambient-y {
+  syntax: '<length-percentage>';
+  inherits: true;
+  initial-value: 24vh;
+}
+
 :root {
-  /* ---------- Acento único ---------- */
+  /* Habilita la función light-dark() y permite que data-theme
+     coordine con el computed color-scheme. Cada [data-theme=*]
+     reasigna color-scheme abajo. */
+  color-scheme: light dark;
+
+  /* ---------- Acento único (estable entre temas) ---------- */
   --color-accent: #06b6d4;
+  --color-accent-hover: #22d3ee;
+  --color-accent-fg: #001014;
   --color-accent-soft: rgba(6, 182, 212, 0.12);
   --color-accent-ring: rgba(6, 182, 212, 0.3);
+
+  /* Status / availability */
+  --color-success: #10b981;
+  --color-success-ring: rgba(16, 185, 129, 0.15);
+  --color-success-ring-soft: rgba(16, 185, 129, 0.05);
 
   /* Gradient — uso restringido a 1 elemento por viewport */
   --gradient-accent: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%);
 
-  /* ---------- Neutrals (dark default) ---------- */
-  --color-bg: #050507;
-  --color-bg-elevated: #0b0b0f;
-  --color-fg: #f5f5f7;
-  --color-fg-muted: #a1a1aa;
-  --color-fg-subtle: #71717a;
-  --color-fg-faint: #52525b;
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-strong: rgba(255, 255, 255, 0.14);
-  --color-surface: rgba(255, 255, 255, 0.03);
-  --color-surface-hover: rgba(255, 255, 255, 0.06);
+  /* ---------- Neutrals (theme-aware via light-dark()) ---------- */
+  --color-bg: light-dark(#fafafa, #050507);
+  --color-bg-elevated: light-dark(#ffffff, #0b0b0f);
+  --color-fg: light-dark(#0a0a0a, #f5f5f7);
+  --color-fg-muted: light-dark(#525252, #a1a1aa);
+  --color-fg-subtle: light-dark(#737373, #71717a);
+  --color-fg-faint: light-dark(#a3a3a3, #52525b);
+  --color-border: light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.08));
+  --color-border-strong: light-dark(rgba(0, 0, 0, 0.14), rgba(255, 255, 255, 0.14));
+  --color-surface: light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.03));
+  --color-surface-hover: light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.06));
 
   /* ---------- Tipografía ---------- */
   --font-sans: 'Inter Variable', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -39,20 +66,16 @@
   --text-2xl: clamp(1.5rem, 1.3rem + 0.9vw, 2rem);
   --text-3xl: clamp(2rem, 1.6rem + 1.8vw, 2.75rem);
   --text-4xl: clamp(2.5rem, 1.8rem + 3vw, 4rem);
-  --text-5xl: clamp(2.2rem, 1.8rem + 3.5vw, 3.8rem);
   --text-6xl: clamp(2.5rem, 2rem + 4vw, 4.5rem);
 
-  /* Pesos */
-  --weight-light: 300;
+  /* Pesos (usados: regular, medium, semibold, bold) */
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
   --weight-bold: 700;
 
-  /* Tracking — apretado en displays grandes, normal en body */
+  /* Tracking — solo dos valores reales en uso */
   --tracking-tight: 0;
-  --tracking-snug: 0;
-  --tracking-normal: 0;
   --tracking-wide: 0.04em;
 
   /* Leading */
@@ -109,17 +132,12 @@
 }
 
 /* =============================================================
-   Light theme (overrides semantic tokens)
+   Theme switching — data-theme controla el color-scheme.
+   light-dark() en los tokens hace todo el trabajo automáticamente.
    ============================================================= */
+[data-theme='dark'] {
+  color-scheme: dark;
+}
 [data-theme='light'] {
-  --color-bg: #fafafa;
-  --color-bg-elevated: #ffffff;
-  --color-fg: #0a0a0a;
-  --color-fg-muted: #525252;
-  --color-fg-subtle: #737373;
-  --color-fg-faint: #a3a3a3;
-  --color-border: rgba(0, 0, 0, 0.08);
-  --color-border-strong: rgba(0, 0, 0, 0.14);
-  --color-surface: rgba(0, 0, 0, 0.02);
-  --color-surface-hover: rgba(0, 0, 0, 0.04);
+  color-scheme: light;
 }

@@ -1,14 +1,12 @@
 ---
 import Section from '../ui/Section.astro';
+import SectionHeader from '../ui/SectionHeader.astro';
 ---
 
 <Section id="sobre-mi" ariaLabel="Sobre mí">
-  <header class="about__header">
-    <p class="eyebrow">01 · Sobre mí</p>
-    <h2 class="about__heading display">
-      Diseño backend que <em>aguanta</em> producción.
-    </h2>
-  </header>
+  <SectionHeader eyebrow="01 · Sobre mí" size="lg" class="section-header--lg-gap">
+    Diseño backend que <em>aguanta</em> producción.
+  </SectionHeader>
 
   <div class="about__grid">
     <div class="about__bio">
@@ -28,39 +26,29 @@ import Section from '../ui/Section.astro';
   <dl class="about__metrics">
     <div class="metric">
       <dt class="metric__label">Años</dt>
-      <dd class="metric__value display">6+</dd>
-      <p class="metric__note">construyendo backend en producción</p>
+      <dd>
+        <span class="metric__value display">6+</span>
+        <span class="metric__note">construyendo backend en producción</span>
+      </dd>
     </div>
     <div class="metric">
       <dt class="metric__label">Industrias</dt>
-      <dd class="metric__value display">4</dd>
-      <p class="metric__note">banca, riesgo, e-commerce, agroindustria</p>
+      <dd>
+        <span class="metric__value display">4</span>
+        <span class="metric__note">banca, riesgo, e-commerce, agroindustria</span>
+      </dd>
     </div>
     <div class="metric">
       <dt class="metric__label">Stack</dt>
-      <dd class="metric__value display">Java + JVM</dd>
-      <p class="metric__note">Spring · Quarkus · Kafka · AWS · Azure</p>
+      <dd>
+        <span class="metric__value display">Java + JVM</span>
+        <span class="metric__note">Spring · Quarkus · Kafka · AWS · Azure</span>
+      </dd>
     </div>
   </dl>
 </Section>
 
 <style>
-  .about__header {
-    margin-bottom: var(--space-16);
-    max-width: 48rem;
-  }
-
-  .about__heading {
-    font-size: var(--text-4xl);
-    line-height: 1.05;
-    margin-top: var(--space-4);
-  }
-
-  .about__heading em {
-    font-style: italic;
-    color: var(--color-accent);
-  }
-
   .about__grid {
     display: flex;
     flex-direction: column;
@@ -96,6 +84,16 @@ import Section from '../ui/Section.astro';
     gap: var(--space-2);
   }
 
+  /* <dd> ahora agrupa value + note (antes el <p> vivía fuera del dd,
+     rompiendo el modelo de description list). Layout interno idéntico
+     al original: dt → gap → dd[value → gap → note]. */
+  .metric dd {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: 0;
+  }
+
   .metric__label {
     font-family: var(--font-mono);
     font-size: var(--text-xs);
@@ -125,14 +123,6 @@ import Section from '../ui/Section.astro';
   }
 
   @media (max-width: 640px) {
-    .about__header {
-      margin-bottom: var(--space-8);
-    }
-
-    .about__heading {
-      font-size: var(--text-3xl);
-    }
-
     .about__grid {
       margin-bottom: var(--space-12);
     }

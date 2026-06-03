@@ -15,9 +15,19 @@ html {
   -webkit-text-size-adjust: 100%;
   -moz-tab-size: 4;
   tab-size: 4;
-  scroll-behavior: smooth;
+  /* scroll-behavior: smooth INTENCIONALMENTE OMITIDO.
+     Aplicarlo a html afecta el scroll natural (wheel/touchpad/touch)
+     creando sensación de "drag" en algunos browsers (Safari notable).
+     El smooth scroll programático para anchors se controla en JS
+     vía window.scrollTo({ behavior: 'smooth' }) — eso funciona sin
+     la declaración CSS y respeta prefers-reduced-motion. */
   scroll-padding-top: 4.75rem;
-  overflow-x: hidden;
+  /* clip vs hidden: clip recorta visualmente pero NO crea contexto
+     de scroll, lo que preserva el scrollbar vertical visible. */
+  overflow-x: clip;
+  /* Reserva espacio para el scrollbar evitando layout shifts cuando
+     aparece/desaparece y elimina el "salto" al abrir modals. */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -25,8 +35,18 @@ body {
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* overflow-x: clip se aplica solo en <html> — duplicarlo en body
+     genera doble contenedor de clip sin beneficio. */
+}
+
+/* text-rendering: optimizeLegibility solo en displays/headings.
+   En body global añade ~30–50ms al primer paint en mobile sin
+   ganancia visible para body copy. */
+h1,
+h2,
+h3,
+.display {
   text-rendering: optimizeLegibility;
-  overflow-x: hidden;
 }
 
 img,
@@ -73,7 +93,7 @@ h6 {
   text-wrap: balance;
   line-height: var(--leading-snug);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-snug);
+  letter-spacing: var(--tracking-tight);
 }
 
 p {
@@ -83,7 +103,11 @@ p {
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;
-  border-radius: 4px;
+  /* border-radius INTENCIONALMENTE OMITIDO. Browsers modernos
+     (Chrome 94+, Safari 16.4+, Firefox 88+) hacen que el outline
+     siga automáticamente el border-radius del elemento. Declarar
+     border-radius aquí mutaba el radius del ELEMENTO durante el
+     focus (cards 16px → 4px), introduciendo un salto visual. */
 }
 
 @media (prefers-reduced-motion: reduce) {

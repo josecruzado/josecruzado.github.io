@@ -30,7 +30,6 @@ const canonicalUrl = canonical
   : new URL(Astro.url.pathname, SITE.url).href;
 
 const imageUrl = new URL(image, SITE.url).href;
-const keywords = SITE.seo.keywords.join(', ');
 ---
 
 <!-- Charset y viewport -->
@@ -41,7 +40,6 @@ const keywords = SITE.seo.keywords.join(', ');
 <title>{pageTitle}</title>
 <meta name="title" content={pageTitle} />
 <meta name="description" content={description} />
-<meta name="keywords" content={keywords} />
 <meta name="author" content={SITE.author.name} />
 
 <!-- Robots -->
@@ -54,10 +52,26 @@ const keywords = SITE.seo.keywords.join(', ');
 <!-- Canonical -->
 <link rel="canonical" href={canonicalUrl} />
 
+<!-- hreflang — el sitio está en español. Si en futuro se añade /en,
+     añadir el hreflang="en" aquí. x-default cubre fallback. -->
+<link rel="alternate" hreflang="es" href={SITE.url} />
+<link rel="alternate" hreflang="x-default" href={SITE.url} />
+
 <!-- Theme color reactivo al esquema preferido -->
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content={SITE.seo.themeColorDark} />
 <meta name="theme-color" media="(prefers-color-scheme: light)" content={SITE.seo.themeColorLight} />
 <meta name="color-scheme" content="dark light" />
+
+<!-- Install-as-app: el estándar moderno es `mobile-web-app-capable`.
+     Mantenemos también `apple-mobile-web-app-capable` porque iOS Safari
+     todavía lo requiere para el modo standalone al añadir a pantalla
+     de inicio (no es alias en iOS, es la clave canónica de Apple). -->
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content={SITE.author.displayName} />
+<meta name="application-name" content={`${SITE.author.displayName} · Portfolio`} />
+<meta name="format-detection" content="telephone=no" />
 
 <!-- Open Graph -->
 <meta property="og:type" content={type} />
@@ -87,12 +101,36 @@ const keywords = SITE.seo.keywords.join(', ');
 <meta name="twitter:image" content={imageUrl} />
 <meta name="twitter:image:alt" content={`${SITE.author.name} — ${SITE.author.role}`} />
 
-<!-- Favicons -->
+<!-- Favicons. El SVG es el primario (escalable, oscuro y claro).
+     El PNG 420x420 (mismo size que declara manifest.webmanifest) cubre
+     iOS home screen y dispositivos sin soporte SVG. -->
+<!-- sizes="any" sobre el SVG: instruye a Chrome 99+/Edge a preferirlo
+     como icono primario en cualquier resolución (escalable). Sin el
+     atributo, en algunos casos prefería el PNG raster. -->
+<link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg" />
 <link rel="icon" type="image/png" sizes="420x420" href="/apple-touch-icon.png" />
 <link rel="apple-touch-icon" sizes="420x420" href="/apple-touch-icon.png" />
 
 <!-- Sitemap discoverability -->
 <link rel="sitemap" type="application/xml" href="/sitemap-index.xml" />
+
+<!-- rel="me" — verificación cruzada de identidad. Permite a indexers,
+     agregadores y Mastodon confirmar que este sitio y los perfiles
+     externos pertenecen a la misma persona. Patrón IndieWeb estándar. -->
+<link rel="me" href={SITE.social.linkedin} />
+<link rel="me" href={SITE.social.github} />
+<link rel="me" href={`mailto:${SITE.author.email}`} />
+
+<!-- Speculation Rules: el CV se prefetchea con eagerness "moderate" —
+     el browser dispara la descarga al primer hover/focus sobre cualquier
+     <a href="/cv.pdf">, no al cargar la página. Resultado: usuarios que
+     no descargan el CV no pagan el costo (~250KB) y los que sí lo hacen
+     ven carga instantánea. Chrome 121+ / Edge 121+ (Baseline candidate
+     2024). Browsers sin soporte ignoran el script silenciosamente —
+     fallback graceful, el download sigue funcionando vía request normal. -->
+<script type="speculationrules" is:inline
+  >{"prefetch":[{"source":"list","urls":["/cv.pdf"],"eagerness":"moderate"}]}</script
+>
 
 <!-- Hint para acelerar conexiones a recursos externos clave -->
 <link rel="preconnect" href="https://github.com" />

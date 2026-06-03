@@ -7,6 +7,14 @@ import '../styles/global.css';
 import SEO from '../components/seo/SEO.astro';
 import JsonLd from '../components/seo/JsonLd.astro';
 import { SITE } from '../lib/site';
+// `?url` import: Astro/Vite emiten el archivo al pipeline de assets y
+// devuelven la URL hasheada final (misma que la del @font-face en CSS).
+// Garantiza que el preload apunte al mismo archivo que cargará el browser,
+// no a una ruta paralela que generaría una doble descarga.
+import interVariable from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+import cascadiaVariable from '@fontsource-variable/cascadia-code/files/cascadia-code-latin-wght-normal.woff2?url';
+
+const htmlLang = SITE.locale.split('-')[0];
 
 interface Props {
   title?: string;
@@ -28,7 +36,7 @@ const {
 ---
 
 <!doctype html>
-<html lang="es" data-theme="dark">
+<html lang={htmlLang} data-theme="dark">
   <head>
     <SEO
       title={title}
@@ -39,19 +47,69 @@ const {
       noindex={noindex}
     />
     <JsonLd />
+    <!--
+      Preload de las dos fuentes variables ANTES del CSS para que el
+      browser inicie la descarga en el momento más temprano posible
+      del head parsing. Combinado con font-display: swap y size-adjust,
+      la fuente real está disponible antes del primer paint en la
+      mayoría de los casos → sin FOUT visible. crossorigin es requerido
+      por la spec para fonts (CORS) incluso same-origin.
+    -->
+    <link rel="preload" href={interVariable} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={cascadiaVariable} as="font" type="font/woff2" crossorigin />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <!-- Theme inicial aplicado antes del primer paint para evitar FOUC -->
+    <!--
+      Safety net para usuarios sin JS habilitado: el script inline de
+      abajo añade .js-anim a <html> y deja invisibles hero+cards hasta
+      que Motion los revele. Sin JS, el setTimeout nunca dispara y los
+      elementos quedarían ocultos los 1.5s del safety timeout. Este
+      <noscript> los fuerza visibles desde el primer paint cuando el
+      JS está bloqueado, sin afectar el flujo normal con JS habilitado.
+    -->
+    <noscript>
+      <style>
+        html.js-anim .hero__avatar-wrapper,
+        html.js-anim .hero__meta,
+        html.js-anim .hero__title,
+        html.js-anim .hero__statement,
+        html.js-anim .hero__stats,
+        html.js-anim .hero__actions,
+        html.js-anim .project {
+          opacity: 1 !important;
+          transform: none !important;
+        }
+      </style>
+    </noscript>
+    <!-- Theme + animaciones — aplicados antes del primer paint para evitar FOUC -->
     <script is:inline>
       (() => {
+        const html = document.documentElement;
         try {
           const saved = localStorage.getItem('theme');
           const prefers = window.matchMedia('(prefers-color-scheme: light)').matches
             ? 'light'
             : 'dark';
-          document.documentElement.dataset.theme = saved || prefers;
+          html.dataset.theme = saved || prefers;
         } catch (_) {
           /* SSR/no-storage: usa el default del HTML */
         }
+        // .js-anim oculta el hero hasta que Motion ejecute el spring
+        // stagger. En mobile NO se aplica: el entrance se siente mejor
+        // sin animación (evita flash y lag percibido sobre redes lentas).
+        // Si JS falla o reduced-motion está activo, el safety timeout
+        // y/o el script principal la retiran.
+        try {
+          const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          const isMobile = window.matchMedia('(max-width: 768px)').matches;
+          if (!reducedMotion && !isMobile) {
+            html.classList.add('js-anim');
+            // Safety net acortado a 1500ms: si Motion no inicia (red lenta,
+            // JS deshabilitado, bundle bloqueado), el contenido aparece en
+            // ≤1.5s en lugar de quedar invisible hasta 4s. Motion sigue
+            // siendo quien retira la clase normalmente, mucho antes.
+            setTimeout(() => html.classList.remove('js-anim'), 1500);
+          }
+        } catch (_) {}
       })();
     </script>
   </head>
@@ -61,6 +119,16 @@ const {
     <slot />
 
     <script>
+      // Smooth scroll global para anchor clicks (#xxx). Reemplaza
+      // el CSS scroll-behavior: smooth que afectaba al scroll natural.
+      import '../scripts/smooth-scroll.ts';
+
+      // Motion-powered animations: hero entrance, magnetic hover, card lift.
+      // Importado a nivel de página — se incluye en el chunk principal de
+      // Astro pero el módulo internamente respeta reduced-motion y solo
+      // ejecuta hovers en pointer:fine.
+      import '../scripts/animations.ts';
+
       const rootElement = document.documentElement;
       const canTrackPointer =
         window.matchMedia('(pointer: fine)').matches &&
@@ -88,43 +156,70 @@ const {
         );
       }
 
-      // Intersection Observer para revelar elementos al hacer scroll
-      const observerOptions = {
-        root: null,
-        rootMargin: '0px',
-        threshold: 0.1,
+      // Scroll perf optimization — pausa animaciones infinitas y simplifica
+      // el backdrop-filter del nav mientras el usuario hace scroll. Reduce
+      // significativamente el work del compositor (especialmente en GPU
+      // de gama media/baja) donde:
+      //   - pulse-soft anima box-shadow (no GPU-accelerated → repaint)
+      //   - backdrop-filter del nav re-bluerea cada frame de scroll
+      // El estado se marca con .is-scrolling en <html>; el CSS aplica
+      // animation-play-state: paused y reduce el blur.
+      let scrollEndTimer: number | undefined;
+      const markScrollStart = () => {
+        if (!rootElement.classList.contains('is-scrolling')) {
+          rootElement.classList.add('is-scrolling');
+        }
+        if (scrollEndTimer) window.clearTimeout(scrollEndTimer);
+        scrollEndTimer = window.setTimeout(() => {
+          rootElement.classList.remove('is-scrolling');
+        }, 180);
       };
 
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-revealed');
-            observer.unobserve(entry.target);
-          }
-        });
-      }, observerOptions);
+      window.addEventListener(
+        'scroll',
+        () => {
+          markScrollStart();
+        },
+        { passive: true }
+      );
 
-      // Observamos todas las secciones principales y tarjetas
-      document.addEventListener('astro:page-load', () => {
-        document
-          .querySelectorAll(
-            '.project, .experience-item, .hero__title, .hero__statement, .hero__actions'
-          )
-          .forEach((el) => {
-            el.classList.add('reveal-element');
-            observer.observe(el);
+      // scrollend (Baseline 2024) limpia el flag con más precisión que el
+      // timeout. El timeout queda como fallback para Safari estable.
+      window.addEventListener(
+        'scrollend',
+        () => {
+          if (scrollEndTimer) window.clearTimeout(scrollEndTimer);
+          rootElement.classList.remove('is-scrolling');
+        },
+        { passive: true }
+      );
+
+      // IntersectionObserver para revelar tarjetas al scrollear.
+      // El estado inicial oculto lo aplica .js-anim vía CSS (utilities.css),
+      // antes del primer paint — sin FOUC y sin necesidad de inyectar
+      // clases extras via JS. El hero NO se incluye: lo controla Motion.
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-revealed');
+              observer.unobserve(entry.target);
+            }
           });
-      });
+        },
+        { rootMargin: '0px', threshold: 0.1 }
+      );
 
-      // Fallback para cuando no hay view transitions
-      document
-        .querySelectorAll(
-          '.project, .experience-item, .hero__title, .hero__statement, .hero__actions'
-        )
-        .forEach((el) => {
-          el.classList.add('reveal-element');
+      function registerRevealTargets() {
+        document.querySelectorAll<HTMLElement>('.project').forEach((el) => {
+          if (el.dataset.revealRegistered === 'true') return;
+          el.dataset.revealRegistered = 'true';
           observer.observe(el);
         });
+      }
+
+      registerRevealTargets();
+      document.addEventListener('astro:page-load', registerRevealTargets);
     </script>
   </body>
 </html>

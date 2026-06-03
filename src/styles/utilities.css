@@ -26,20 +26,30 @@
 
 .skip-link {
   position: absolute;
-  top: -100px;
-  left: 1rem;
+  /* Logical properties: top→inset-block-start, left→inset-inline-start
+     para que el skip-link siga el flujo si el documento se sirve en RTL
+     (futuro soporte AR/HE). Para LTR el comportamiento es idéntico. */
+  inset-block-start: -100px;
+  inset-inline-start: 1rem;
   z-index: var(--z-modal);
   padding: 0.75rem 1.25rem;
   background: var(--color-accent);
   color: var(--color-bg);
   font-weight: var(--weight-semibold);
   border-radius: var(--radius-md);
-  transition: top var(--duration-fast) var(--ease-out);
+  transition: inset-block-start var(--duration-fast) var(--ease-out);
 }
 
 .skip-link:focus-visible {
-  top: 1rem;
+  inset-block-start: 1rem;
   outline: 2px solid var(--color-fg);
+}
+
+/* El <main tabindex="-1"> no debe mostrar outline al recibir foco
+   programático desde el skip-link — es enfocable por accesibilidad,
+   no por interacción visual del usuario. */
+main[tabindex='-1']:focus {
+  outline: none;
 }
 
 .sr-only {
@@ -62,35 +72,34 @@
   margin: 0;
 }
 
-/* Animaciones de scroll (Reveal on Scroll) */
-.reveal-element {
-  opacity: 0;
-  transform: translateY(20px);
-  transition:
-    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
-}
-
+/* Reveal-on-scroll para tarjetas (Projects, Experience).
+   La opacidad/transform inicial los aplica .js-anim (abajo) para evitar
+   FOUC. IntersectionObserver añade .is-revealed cuando entran al viewport. */
 .is-revealed {
   opacity: 1;
   transform: translateY(0);
+  transition:
+    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Retrasos secuenciales para los elementos del hero */
-.hero__title.reveal-element {
-  transition-delay: 100ms;
-}
-.hero__statement.reveal-element {
-  transition-delay: 250ms;
-}
-.hero__actions.reveal-element {
-  transition-delay: 400ms;
+/* .js-anim se aplica antes del primer paint (script inline en BaseLayout)
+   solo en desktop sin reduced-motion. Sin JS los items quedan visibles
+   por default — graceful degradation total. */
+html.js-anim .hero__avatar-wrapper,
+html.js-anim .hero__meta,
+html.js-anim .hero__title,
+html.js-anim .hero__statement,
+html.js-anim .hero__stats,
+html.js-anim .hero__actions {
+  opacity: 0;
 }
 
-@media (max-width: 640px) {
-  .reveal-element {
-    transform: none;
-    will-change: opacity;
-  }
+html.js-anim .project {
+  opacity: 0;
+  transform: translateY(20px);
+  /* will-change INTENCIONALMENTE OMITIDO. Promociona cada card a su
+     propia GPU layer permanentemente, consumiendo memoria que no
+     necesitamos (las cards animan UNA vez al revelar y luego son
+     estáticas). El browser auto-optimiza transform+opacity sin hint. */
 }

@@ -1,42 +1,43 @@
 ---
 import { getCollection } from 'astro:content';
 import Section from '../ui/Section.astro';
+import SectionHeader from '../ui/SectionHeader.astro';
 import Icon from '../ui/Icon.astro';
 
 const experiences = (await getCollection('experience')).sort((a, b) => a.data.order - b.data.order);
 ---
 
 <Section id="experiencia" ariaLabel="Experiencia">
-  <header class="exp__header">
-    <p class="eyebrow">02 · Trayectoria</p>
-    <h2 class="exp__heading display">
-      Seis años entregando<br /><em>backend</em> que importa.
-    </h2>
-  </header>
+  <SectionHeader eyebrow="02 · Trayectoria" size="lg" class="section-header--lg-gap">
+    Seis años entregando<br /><em>backend</em> que importa.
+  </SectionHeader>
 
   <div class="exp" data-experience>
-    <ol class="exp__list" role="tablist" aria-label="Experiencia profesional">
+    <div
+      class="exp__list"
+      role="tablist"
+      aria-orientation="vertical"
+      aria-label="Experiencia profesional"
+    >
       {
         experiences.map((job, i) => (
-          <li>
-            <button
-              type="button"
-              class={`exp__tab ${i === 0 ? 'is-active' : ''}`}
-              data-exp-tab={job.id}
-              aria-selected={i === 0}
-              aria-controls={`exp-panel-${job.id}`}
-              id={`exp-tab-${job.id}`}
-              role="tab"
-            >
-              <span class="exp__tab-period">{job.data.period}</span>
-              <span class="exp__tab-company">{job.data.company}</span>
-              <span class="exp__tab-role">{job.data.role}</span>
-              <Icon name="lucide:arrow-right" size={14} class="exp__tab-arrow" />
-            </button>
-          </li>
+          <button
+            type="button"
+            class={`exp__tab ${i === 0 ? 'is-active' : ''}`}
+            data-exp-tab={job.id}
+            aria-selected={i === 0}
+            aria-controls={`exp-panel-${job.id}`}
+            id={`exp-tab-${job.id}`}
+            role="tab"
+          >
+            <span class="exp__tab-period">{job.data.period}</span>
+            <span class="exp__tab-company">{job.data.company}</span>
+            <span class="exp__tab-role">{job.data.role}</span>
+            <Icon name="lucide:arrow-right" size={14} class="exp__tab-arrow" />
+          </button>
         ))
       }
-    </ol>
+    </div>
 
     <div class="exp__panels">
       {
@@ -48,6 +49,7 @@ const experiences = (await getCollection('experience')).sort((a, b) => a.data.or
             role="tabpanel"
             aria-labelledby={`exp-tab-${job.id}`}
             hidden={i !== 0}
+            inert={i !== 0}
           >
             <header class="exp__panel-header">
               <p class="exp__panel-meta">
@@ -98,7 +100,7 @@ const experiences = (await getCollection('experience')).sort((a, b) => a.data.or
     root.setAttribute('data-setup', 'true');
 
     const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-exp-tab]'));
-    const panels = Array.from(root.querySelectorAll('[data-exp-panel]'));
+    const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-exp-panel]'));
 
     function activateTab(tab: HTMLButtonElement, shouldFocus = false) {
       const slug = tab.getAttribute('data-exp-tab');
@@ -113,14 +115,24 @@ const experiences = (await getCollection('experience')).sort((a, b) => a.data.or
       panels.forEach((p) => {
         const isActive = p.getAttribute('data-exp-panel') === slug;
         p.classList.toggle('is-active', isActive);
+        // inert + hidden: hidden saca del flow visual y del orden tabular,
+        // inert adicionalmente desactiva interacción y elimina los hijos
+        // del accessibility tree (lectores no anuncian contenido de tabs
+        // ocultas via virtual cursor). Baseline 2023.
         if (isActive) {
           p.removeAttribute('hidden');
+          p.removeAttribute('inert');
         } else {
           p.setAttribute('hidden', '');
+          p.setAttribute('inert', '');
         }
       });
 
-      if (shouldFocus) tab.focus();
+      // preventScroll: evita que el browser intente centrar el tab
+      // recién focado y desplace la página (el panel es position:
+      // sticky en desktop → un focus implícito desplaza el viewport
+      // y se ve como salto al pulsar flechas).
+      if (shouldFocus) tab.focus({ preventScroll: true });
     }
 
     tabs.forEach((tab) => {
@@ -166,22 +178,6 @@ const experiences = (await getCollection('experience')).sort((a, b) => a.data.or
 </script>
 
 <style>
-  .exp__header {
-    margin-bottom: var(--space-16);
-    max-width: 48rem;
-  }
-
-  .exp__heading {
-    font-size: var(--text-4xl);
-    line-height: 1.05;
-    margin-top: var(--space-4);
-  }
-
-  .exp__heading em {
-    font-style: italic;
-    color: var(--color-accent);
-  }
-
   .exp {
     display: grid;
     grid-template-columns: 1fr;
@@ -195,7 +191,6 @@ const experiences = (await getCollection('experience')).sort((a, b) => a.data.or
     display: flex;
     flex-direction: column;
     border-top: 1px solid var(--color-border);
-    list-style: none;
   }
 
   .exp__tab {
@@ -322,6 +317,12 @@ const experiences = (await getCollection('experience')).sort((a, b) => a.data.or
     }
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    .exp__panel.is-active {
+      animation: none;
+    }
+  }
+
   .exp__panel-meta {
     display: flex;
     gap: var(--space-2);
@@ -420,14 +421,6 @@ const experiences = (await getCollection('experience')).sort((a, b) => a.data.or
   }
 
   @media (max-width: 640px) {
-    .exp__header {
-      margin-bottom: var(--space-8);
-    }
-
-    .exp__heading {
-      font-size: var(--text-3xl);
-    }
-
     .exp {
       gap: var(--space-8);
     }
@@ -440,12 +433,6 @@ const experiences = (await getCollection('experience')).sort((a, b) => a.data.or
       padding: 0;
       border-top: 0;
       max-width: 100%;
-      list-style: none;
-    }
-
-    .exp__list li {
-      min-width: 0;
-      list-style: none;
     }
 
     .exp__tab {

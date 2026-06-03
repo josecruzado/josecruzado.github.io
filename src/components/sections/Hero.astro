@@ -1,7 +1,9 @@
 ---
+import { Image } from 'astro:assets';
 import Section from '../ui/Section.astro';
 import Button from '../ui/Button.astro';
 import Icon from '../ui/Icon.astro';
+import { SITE } from '../../lib/site';
 import memoji from '../../assets/memoji.png';
 ---
 
@@ -29,14 +31,25 @@ import memoji from '../../assets/memoji.png';
         >.
       </p>
 
+      <dl class="hero__stats" aria-label="Resumen de impacto">
+        {
+          SITE.stats.map((stat) => (
+            <div class="hero__stat">
+              <dt class="hero__stat-label">{stat.label}</dt>
+              <dd class="hero__stat-value">{stat.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+
       <div class="hero__actions">
         <Button href="/cv.pdf" download="Jose-Cruzado-CV.pdf" variant="primary" size="lg">
           Descargar CV
-          <Icon name="lucide:arrow-down" size={16} />
+          <Icon name="lucide:download" size={16} />
         </Button>
-        <Button href="#experiencia" variant="secondary" size="lg">
-          Ver experiencia
-          <Icon name="lucide:briefcase" size={16} />
+        <Button href="#proyectos" variant="secondary" size="lg">
+          Ver proyectos
+          <Icon name="lucide:arrow-right" size={16} />
         </Button>
         <Button href="#contacto" variant="link">Contactar</Button>
       </div>
@@ -44,13 +57,17 @@ import memoji from '../../assets/memoji.png';
 
     <div class="hero__visual">
       <div class="hero__avatar-wrapper">
-        <img
-          src={memoji.src}
-          alt="José Cruzado Avatar"
+        <Image
+          src={memoji}
+          alt="José Cruzado, Senior Backend Java Developer"
           class="hero__avatar"
-          width="280"
-          height="280"
+          widths={[140, 280, 400]}
+          sizes="(min-width: 640px) 280px, 132px"
           loading="eager"
+          fetchpriority="high"
+          decoding="async"
+          format="webp"
+          quality={88}
         />
         <div class="hero__avatar-backdrop"></div>
       </div>
@@ -131,15 +148,27 @@ import memoji from '../../assets/memoji.png';
     /* Efecto de PNG transparente con resplandor técnico cyan */
     filter: drop-shadow(0 15px 25px rgba(6, 182, 212, 0.25));
     animation: float 6s ease-in-out infinite;
+    /* translateZ promueve el avatar a su propia capa GPU. drop-shadow
+       es un filter caro de recomponer; si el avatar comparte layer con
+       el body, durante scroll la sombra se repinta con ligero retraso
+       respecto al elemento (visible como "ghost"/sombra extraña).
+       En su propia capa, la sombra se cachea como textura y solo se
+       traslada con el scroll. backface-visibility refuerza la promoción. */
+    transform: translateZ(0);
+    backface-visibility: hidden;
   }
 
+  /* Keyframes con translate3d para mantener la promoción a capa GPU
+     durante toda la animación. Sin Z, algunos browsers podían
+     desactivar la promoción a mid-animation si determinaban que
+     translateY es 2D-only. */
   @keyframes float {
     0%,
     100% {
-      transform: translateY(0);
+      transform: translate3d(0, 0, 0);
     }
     50% {
-      transform: translateY(-15px);
+      transform: translate3d(0, -15px, 0);
     }
   }
 
@@ -188,18 +217,18 @@ import memoji from '../../assets/memoji.png';
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #10b981;
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+    background: var(--color-success);
+    box-shadow: 0 0 0 4px var(--color-success-ring);
     animation: pulse-soft 2.4s ease-in-out infinite;
   }
 
   @keyframes pulse-soft {
     0%,
     100% {
-      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+      box-shadow: 0 0 0 4px var(--color-success-ring);
     }
     50% {
-      box-shadow: 0 0 0 8px rgba(16, 185, 129, 0.05);
+      box-shadow: 0 0 0 8px var(--color-success-ring-soft);
     }
   }
 
@@ -208,6 +237,9 @@ import memoji from '../../assets/memoji.png';
     line-height: 0.98;
     letter-spacing: var(--tracking-tight);
     margin: 0;
+    /* balance evita que la última línea quede huérfana de 1–2 palabras,
+       crítico en headings editoriales de 2 líneas. Baseline 2024. */
+    text-wrap: balance;
   }
 
   .hero__name {
@@ -258,6 +290,9 @@ import memoji from '../../assets/memoji.png';
     color: var(--color-fg-muted);
     max-width: 44rem;
     font-weight: var(--weight-regular);
+    /* pretty mejora el wrap del párrafo evitando líneas finales cortas,
+       sin alterar la altura como sí lo haría balance en multi-línea. */
+    text-wrap: pretty;
   }
 
   .badge-text {
@@ -270,35 +305,92 @@ import memoji from '../../assets/memoji.png';
     border: 1px solid var(--color-border);
   }
 
+  .hero__stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, max-content));
+    gap: var(--space-8);
+    margin: 0;
+    padding: var(--space-5) 0;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    width: 100%;
+    max-width: 36rem;
+  }
+
+  .hero__stat {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+
+  .hero__stat-value {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 1.3rem + 1.2vw, 2.25rem);
+    font-weight: var(--weight-semibold);
+    line-height: 1;
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-fg);
+    margin: 0;
+  }
+
+  .hero__stat-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-fg-subtle);
+    line-height: var(--leading-snug);
+  }
+
   .hero__actions {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-6);
     align-items: center;
-    margin-top: var(--space-6);
+    margin-top: var(--space-2);
   }
 
+  /* Scroll hint — texto vertical leíble de abajo→arriba + línea
+     animada apuntando hacia el contenido. El writing-mode se aplica
+     SOLO al texto, no al contenedor flex (de lo contrario flex-direction
+     column se invierte a horizontal en screen space, rompiendo el
+     layout vertical).
+
+     Visibilidad: oculto por default, se muestra SOLO cuando el Hero
+     activa su grid 2-col (≥900px) — antes de eso el contenido del
+     hero ocupa todo el ancho y el hint solaparía con CTAs / stats. */
   .hero__scroll-hint {
+    display: none;
     position: absolute;
-    bottom: var(--space-8);
-    right: var(--container-padding);
-    display: flex;
+    bottom: var(--space-10);
+    right: var(--space-6);
     flex-direction: column;
     align-items: center;
     gap: var(--space-3);
+    pointer-events: none;
+  }
+
+  @media (min-width: 900px) {
+    .hero__scroll-hint {
+      display: flex;
+    }
+  }
+
+  .hero__scroll-hint > span:first-child {
     font-family: var(--font-mono);
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
-    letter-spacing: 0.2em;
-    color: var(--color-fg-faint);
+    letter-spacing: 0.25em;
+    color: var(--color-fg-subtle);
     writing-mode: vertical-rl;
     transform: rotate(180deg);
   }
 
   .hero__scroll-line {
     width: 1px;
-    height: 3.5rem;
-    background: linear-gradient(to top, transparent, var(--color-fg-faint));
+    height: 4rem;
+    background: linear-gradient(to bottom, transparent, var(--color-fg-subtle));
     animation: scroll-line 2.5s ease-in-out infinite;
   }
 
@@ -316,19 +408,39 @@ import memoji from '../../assets/memoji.png';
     }
   }
 
-  @media (max-width: 640px) {
-    .hero__scroll-hint {
-      display: none;
+  /* Respeto integral de reduced-motion en cualquier viewport: las
+     animaciones decorativas (float, pulse-glow, slide-in, scroll-line,
+     pulse-soft) no deben ejecutarse si el usuario las desactiva. La
+     regla anterior solo cubría mobile vía override de animation: none. */
+  @media (prefers-reduced-motion: reduce) {
+    .hero__avatar,
+    .hero__avatar-backdrop,
+    .hero__status,
+    .hero__scroll-line,
+    .tech-glow::after {
+      animation: none;
     }
+    .tech-glow::after {
+      transform: scaleX(1);
+      transform-origin: left;
+    }
+  }
+
+  @media (max-width: 640px) {
     .hero {
-      gap: var(--space-6);
-      padding-block: var(--space-20) var(--space-8);
+      /* Padding y gap reducidos para que los CTAs entren en el
+         primer pliegue de mobile (iPhone 14 ~750px disponibles).
+         Antes: padding 4rem/2.5rem + gap 1.25rem dejaba ~826px de
+         contenido (los botones quedaban fuera del viewport). */
+      gap: var(--space-4);
+      padding-block: var(--space-8) var(--space-6);
     }
 
     .hero__content {
-      gap: var(--space-6);
+      gap: var(--space-4);
       align-items: center;
       text-align: center;
+      width: 100%;
     }
 
     .hero__visual {
@@ -336,45 +448,104 @@ import memoji from '../../assets/memoji.png';
     }
 
     .hero__avatar-wrapper {
-      width: 148px;
-      height: 148px;
+      width: 116px;
+      height: 116px;
     }
 
     .hero__avatar {
-      max-width: 168px;
+      max-width: 132px;
       animation: none;
+      filter: drop-shadow(0 8px 16px rgba(6, 182, 212, 0.22));
+    }
+
+    .hero__avatar-backdrop {
+      animation: none;
+      opacity: 0.6;
     }
 
     .hero__meta {
-      align-items: flex-start;
       justify-content: center;
       white-space: normal;
       line-height: var(--leading-snug);
-      text-align: left;
+      max-width: 100%;
     }
 
     .hero__title {
-      font-size: clamp(2.45rem, 14vw, 3.4rem);
+      font-size: clamp(2.25rem, 13vw, 3.2rem);
     }
 
     .hero__statement {
       font-size: var(--text-base);
       line-height: var(--leading-normal);
-      max-width: 32rem;
+      max-width: 34rem;
+    }
+
+    .hero__statement .badge-text {
+      white-space: nowrap;
     }
 
     .hero__actions {
       width: 100%;
       max-width: 22rem;
       justify-content: center;
-      gap: var(--space-4);
-      margin-top: var(--space-2);
+      gap: var(--space-3);
+      margin-top: var(--space-1);
     }
 
-    .hero__actions :global(.btn) {
+    .hero__actions :global(.btn:not(.btn--link)) {
       width: 100%;
       min-height: 2.9rem;
       white-space: normal;
+    }
+
+    .hero__actions :global(.btn--link) {
+      width: auto;
+      margin-top: var(--space-1);
+    }
+
+    /* Mobile: stack vertical con valor + label inline en cada fila.
+       Resuelve el wrap descoordinado de labels largas en 3 columnas. */
+    .hero__stats {
+      grid-template-columns: 1fr;
+      gap: 0;
+      padding: 0;
+      border-top: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
+      max-width: 22rem;
+      align-self: center;
+      width: 100%;
+    }
+
+    /* row-reverse: dd (value) primero visual, dt (label) después.
+       Mantiene el orden DOM dt → dd (semánticamente correcto para
+       screen readers) y entrega el patrón "stat card" clásico:
+       número a la izquierda, descripción a la derecha. */
+    .hero__stat {
+      flex-direction: row-reverse;
+      align-items: baseline;
+      gap: var(--space-4);
+      padding: var(--space-3) 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .hero__stat:last-child {
+      border-bottom: 0;
+    }
+
+    .hero__stat-value {
+      font-size: var(--text-xl);
+      flex-shrink: 0;
+      color: var(--color-accent);
+      min-width: 2.5rem;
+      text-align: left;
+    }
+
+    .hero__stat-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-align: left;
+      flex: 1;
+      min-width: 0;
     }
   }
 </style>

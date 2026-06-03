@@ -1,35 +1,42 @@
 ---
 import { getCollection } from 'astro:content';
 import Section from '../ui/Section.astro';
+import SectionHeader from '../ui/SectionHeader.astro';
 import Card from '../ui/Card.astro';
 import Badge from '../ui/Badge.astro';
 import Icon from '../ui/Icon.astro';
+
+const FEATURED_TECH_LIMIT = 6;
+const PRIMARY_TECH_LIMIT = 4;
+const SUPPORTING_TECH_LIMIT = 4;
 
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
 const [featuredProject, ...restProjects] = projects;
 const primaryProjects = restProjects.slice(0, 2);
 const supportingProjects = restProjects.slice(2);
 
-const visibleTech = (technologies: string[], limit = 5) => ({
+const visibleTech = (technologies: string[], limit: number) => ({
   shown: technologies.slice(0, limit),
   hiddenCount: Math.max(0, technologies.length - limit),
 });
+
+const featuredTech = featuredProject
+  ? visibleTech(featuredProject.data.technologies, FEATURED_TECH_LIMIT)
+  : null;
 ---
 
 <Section id="proyectos" ariaLabel="Proyectos">
-  <header class="section-header">
-    <p class="eyebrow">03 · Portfolio</p>
-    <h2 class="section-heading display">
-      Soluciones backend con impacto medible en banca, riesgo y retail.
-    </h2>
-    <p class="section-note">
-      Proyectos enterprise resumidos sin exponer código propietario ni información sensible.
-    </p>
-  </header>
+  <SectionHeader
+    eyebrow="03 · Portfolio"
+    size="md"
+    note="Proyectos enterprise resumidos sin exponer código propietario ni información sensible."
+  >
+    Soluciones backend con impacto medible en banca, riesgo y retail.
+  </SectionHeader>
 
   <div class="projects-showcase">
     {
-      featuredProject && (
+      featuredProject && featuredTech && (
         <Card as="article" accent={featuredProject.data.accent} class="project project--featured">
           <div class="project__main">
             <div class="project__icon">
@@ -59,16 +66,14 @@ const visibleTech = (technologies: string[], limit = 5) => ({
               <span>{featuredProject.data.impact}</span>
             </div>
             <ul class="project__tech cluster" role="list" aria-label="Tecnologías usadas">
-              {visibleTech(featuredProject.data.technologies, 6).shown.map((tech) => (
+              {featuredTech.shown.map((tech) => (
                 <li>
                   <Badge>{tech}</Badge>
                 </li>
               ))}
-              {visibleTech(featuredProject.data.technologies, 6).hiddenCount > 0 && (
+              {featuredTech.hiddenCount > 0 && (
                 <li>
-                  <Badge variant="outline">
-                    +{visibleTech(featuredProject.data.technologies, 6).hiddenCount} más
-                  </Badge>
+                  <Badge variant="outline">+{featuredTech.hiddenCount} más</Badge>
                 </li>
               )}
             </ul>
@@ -80,7 +85,7 @@ const visibleTech = (technologies: string[], limit = 5) => ({
     <ul class="projects projects--primary" role="list" aria-label="Proyectos principales">
       {
         primaryProjects.map((project) => {
-          const tech = visibleTech(project.data.technologies, 4);
+          const tech = visibleTech(project.data.technologies, PRIMARY_TECH_LIMIT);
 
           return (
             <Card as="li" accent={project.data.accent} class="project">
@@ -125,47 +130,32 @@ const visibleTech = (technologies: string[], limit = 5) => ({
     </ul>
   </div>
 
-  <div class="supporting-projects" aria-labelledby="otros-proyectos">
-    <h3 id="otros-proyectos" class="supporting-projects__title">Otros proyectos relevantes</h3>
-    <ul class="supporting-projects__list" role="list">
-      {
-        supportingProjects.map((project) => (
-          <li class="supporting-project">
-            <div>
-              <h4 class="supporting-project__title">{project.data.title}</h4>
-              <p class="supporting-project__client">{project.data.client}</p>
-            </div>
-            <p class="supporting-project__impact">{project.data.impact}</p>
-            <p class="supporting-project__stack">
-              {project.data.technologies.slice(0, 4).join(' · ')}
-            </p>
-          </li>
-        ))
-      }
-    </ul>
-  </div>
+  {
+    supportingProjects.length > 0 && (
+      <div class="supporting-projects" aria-labelledby="otros-proyectos">
+        <h3 id="otros-proyectos" class="supporting-projects__title">
+          Otros proyectos relevantes
+        </h3>
+        <ul class="supporting-projects__list" role="list">
+          {supportingProjects.map((project) => (
+            <li class="supporting-project">
+              <div>
+                <h4 class="supporting-project__title">{project.data.title}</h4>
+                <p class="supporting-project__client">{project.data.client}</p>
+              </div>
+              <p class="supporting-project__impact">{project.data.impact}</p>
+              <p class="supporting-project__stack">
+                {project.data.technologies.slice(0, SUPPORTING_TECH_LIMIT).join(' · ')}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
 </Section>
 
 <style>
-  .section-header {
-    margin-bottom: var(--space-12);
-    max-width: 48rem;
-  }
-
-  .section-heading {
-    font-size: var(--text-3xl);
-    line-height: 1.1;
-    margin-top: var(--space-4);
-  }
-
-  .section-note {
-    color: var(--color-fg-subtle);
-    font-size: var(--text-sm);
-    line-height: var(--leading-normal);
-    margin-top: var(--space-4);
-    max-width: 36rem;
-  }
-
   .projects-showcase {
     display: grid;
     gap: var(--space-6);
@@ -365,14 +355,6 @@ const visibleTech = (technologies: string[], limit = 5) => ({
   }
 
   @media (max-width: 640px) {
-    .section-header {
-      margin-bottom: var(--space-8);
-    }
-
-    .section-heading {
-      font-size: var(--text-2xl);
-    }
-
     .projects-showcase,
     .projects {
       gap: var(--space-4);
@@ -386,6 +368,18 @@ const visibleTech = (technologies: string[], limit = 5) => ({
       width: 2.4rem;
       height: 2.4rem;
       margin-bottom: 0;
+    }
+
+    /* Refuerza la diferenciación visual del featured en mobile,
+       donde pierde el grid de 2 columnas que tiene en desktop.
+       El inset shadow se aplica al .card__content porque el bg
+       del content tapa cualquier shadow pintado en .card root. */
+    .project--featured :global(.card__content) {
+      box-shadow: inset 2px 0 0 0 var(--color-accent);
+    }
+
+    .project--featured .project__icon {
+      box-shadow: 0 0 24px var(--color-accent-soft);
     }
 
     .project__title {
@@ -416,6 +410,10 @@ const visibleTech = (technologies: string[], limit = 5) => ({
     .supporting-project {
       gap: var(--space-2);
       padding-block: var(--space-4);
+    }
+
+    .supporting-project__title {
+      font-size: var(--text-sm);
     }
   }
 </style>

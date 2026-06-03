@@ -31,18 +31,49 @@ const classes = ['card', interactive && 'card--interactive', className].filter(B
 </Tag>
 
 <script>
+  // El spotlight es decorativo y se actualiza en cada mousemove
+  // (repaint costoso). Se desactiva bajo prefers-reduced-motion
+  // y en dispositivos sin puntero fino.
   const setupSpotlights = () => {
-    const cards = document.querySelectorAll('.card--interactive');
+    const supportsHover =
+      window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!supportsHover) return;
+
+    const cards = document.querySelectorAll<HTMLElement>('.card--interactive');
     cards.forEach((card) => {
-      if ((card as HTMLElement).dataset.spotlightSetup === 'true') return;
-      (card as HTMLElement).dataset.spotlightSetup = 'true';
-      card.addEventListener('mousemove', (e: any) => {
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        (card as HTMLElement).style.setProperty('--mouse-x', `${x}px`);
-        (card as HTMLElement).style.setProperty('--mouse-y', `${y}px`);
-      });
+      if (card.dataset.spotlightSetup === 'true') return;
+      card.dataset.spotlightSetup = 'true';
+
+      // rAF throttle: coalesce múltiples mousemove dentro del mismo
+      // frame en una sola escritura de CSS vars. En monitores 120/144Hz
+      // sin throttle se disparaban ~120 setProperty/seg por card,
+      // saturando el main thread cuando había varias cards visibles.
+      let pending = 0;
+      let lastX = 0;
+      let lastY = 0;
+
+      card.addEventListener(
+        'pointermove',
+        (event) => {
+          // Filtra touch/stylus: el spotlight es decorativo de cursor
+          // y `supportsHover` ya excluye dispositivos sin pointer fino,
+          // pero un híbrido (Surface, iPad con Magic Keyboard) puede
+          // pasar el primer check y emitir pointermove de tipo "touch"
+          // al rozar la pantalla. Filtrarlo evita updates fantasma.
+          if (event.pointerType !== 'mouse') return;
+          lastX = event.clientX;
+          lastY = event.clientY;
+          if (pending) return;
+          pending = requestAnimationFrame(() => {
+            const rect = card.getBoundingClientRect();
+            card.style.setProperty('--mouse-x', `${lastX - rect.left}px`);
+            card.style.setProperty('--mouse-y', `${lastY - rect.top}px`);
+            pending = 0;
+          });
+        },
+        { passive: true }
+      );
     });
   };
 
@@ -52,6 +83,11 @@ const classes = ['card', interactive && 'card--interactive', className].filter(B
 
 <style>
   .card {
+    /* container-type permite que los hijos consulten el ancho
+       del card vía @container — independiente del viewport. */
+    container-type: inline-size;
+    container-name: card;
+
     background: var(--color-bg-elevated);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
@@ -77,19 +113,41 @@ const classes = ['card', interactive && 'card--interactive', className].filter(B
     border-radius: inherit;
   }
 
+  /* Card auto-responsive: cuando el card mismo es estrecho
+     (independiente del viewport), reduce padding y radius.
+     Threshold 22rem (~352px) cubre solo cards en mobile single-col;
+     evita aplicarse a primary projects desktop (~400px). */
+  @container card (max-width: 22rem) {
+    .card {
+      border-radius: var(--radius-md);
+    }
+    .card__content {
+      padding: var(--space-5);
+    }
+  }
+
   .card__spotlight {
     position: absolute;
     inset: 0;
     z-index: 1;
     opacity: 0;
     transition: opacity var(--duration-base) var(--ease-out);
+    /* Defaults 50%/50%: spotlight inicia centrado antes del primer
+       pointermove → sin flash en la esquina top-left durante el primer
+       hover. Tamaño con cqi: en cards estrechas (mobile) el radio se
+       reduce proporcionalmente para mantener el efecto puntual.
+       container-type: inline-size ya está en .card → cqi funciona. */
     background: radial-gradient(
-      400px circle at var(--mouse-x, 0) var(--mouse-y, 0),
+      clamp(200px, 50cqi, 400px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
       var(--color-surface-hover),
       transparent 40%
     );
   }
 
+  /* Spotlight queda gated por --interactive: solo cards clickeables
+     muestran el cursor-follow porque sugiere afordancia. Si lo
+     aplicáramos a todas, las cards informativas de Projects/Education
+     darían pista visual de "clickable" que no se cumple. */
   .card--interactive:hover .card__spotlight {
     opacity: 1;
   }
@@ -98,9 +156,16 @@ const classes = ['card', interactive && 'card--interactive', className].filter(B
     background: transparent;
   }
 
-  .card--interactive:hover {
-    border-color: var(--card-accent-ring, var(--color-border-strong));
-    transform: translateY(-2px);
+  /* Lift + border accent en hover aplica a TODAS las cards (informativas
+     o clickeables) — antes lo proveía Motion vía runCardHover, removido
+     para evitar conflictos transform JS↔CSS y reducir trabajo del main
+     thread. (hover: hover) evita que touch devices queden con estado
+     sticky tras tap. La GPU promueve transform sin will-change. */
+  @media (hover: hover) {
+    .card:hover {
+      border-color: var(--card-accent-ring, var(--color-border-strong));
+      transform: translateY(-2px);
+    }
   }
 
   .card[data-accent='cyan'] {
@@ -128,18 +193,8 @@ const classes = ['card', interactive && 'card--interactive', className].filter(B
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .card--interactive:hover {
+    .card:hover {
       transform: none;
-    }
-  }
-
-  @media (max-width: 640px) {
-    .card {
-      border-radius: var(--radius-md);
-    }
-
-    .card__content {
-      padding: var(--space-5);
     }
   }
 </style>

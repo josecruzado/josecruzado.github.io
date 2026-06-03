@@ -1,0 +1,82 @@
+---
+/**
+ * SectionHeader — eyebrow numerado + heading editorial + nota opcional.
+ * Centraliza el patrón duplicado en About/Experience/Projects/Skills/Education.
+ *
+ * - size="lg" : tipografía 4xl (secciones narrativas: About, Experience).
+ * - size="md" : tipografía 3xl (secciones de portfolio/listas).
+ *
+ * El título acepta children con <em> para acentos cromáticos.
+ */
+interface Props {
+  eyebrow: string;
+  size?: 'md' | 'lg';
+  note?: string;
+  class?: string;
+}
+
+const { eyebrow, size = 'md', note, class: className } = Astro.props;
+
+const headerClass = ['section-header', className].filter(Boolean).join(' ');
+const headingClass = `section-header__heading section-header__heading--${size} display`;
+---
+
+<header class={headerClass}>
+  <p class="eyebrow">{eyebrow}</p>
+  <h2 class={headingClass}><slot /></h2>
+  {note && <p class="section-header__note">{note}</p>}
+</header>
+
+<style>
+  .section-header {
+    margin-bottom: var(--space-12);
+    max-width: 48rem;
+  }
+
+  .section-header__heading {
+    margin-top: var(--space-4);
+  }
+
+  .section-header__heading--md {
+    font-size: var(--text-3xl);
+    line-height: 1.1;
+  }
+
+  .section-header__heading--lg {
+    font-size: var(--text-4xl);
+    line-height: 1.05;
+  }
+
+  .section-header__heading :global(em) {
+    font-style: italic;
+    color: var(--color-accent);
+  }
+
+  .section-header__note {
+    color: var(--color-fg-subtle);
+    font-size: var(--text-sm);
+    line-height: var(--leading-normal);
+    margin-top: var(--space-4);
+    max-width: 36rem;
+  }
+
+  @media (min-width: 760px) {
+    .section-header--lg-gap {
+      margin-bottom: var(--space-16);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .section-header {
+      margin-bottom: var(--space-8);
+    }
+
+    .section-header__heading--md {
+      font-size: var(--text-2xl);
+    }
+
+    .section-header__heading--lg {
+      font-size: var(--text-3xl);
+    }
+  }
+</style>

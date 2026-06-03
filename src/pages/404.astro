@@ -24,6 +24,7 @@ import Icon from '../components/ui/Icon.astro';
     min-height: 100dvh;
     display: grid;
     place-items: center;
+    padding-block: var(--space-12);
   }
   .notfound__inner {
     text-align: center;
@@ -41,10 +42,24 @@ import Icon from '../components/ui/Icon.astro';
   .notfound__title {
     font-size: var(--text-3xl);
     font-weight: 700;
+    text-wrap: balance;
   }
   .notfound__subtitle {
     color: var(--color-fg-muted);
     max-width: 32rem;
     margin-bottom: var(--space-4);
+    text-wrap: pretty;
+  }
+
+  @media (max-width: 640px) {
+    .notfound__code {
+      font-size: clamp(5rem, 28vw, 7rem);
+    }
+    .notfound__title {
+      font-size: var(--text-2xl);
+    }
+    .notfound__subtitle {
+      font-size: var(--text-base);
+    }
   }
 </style>

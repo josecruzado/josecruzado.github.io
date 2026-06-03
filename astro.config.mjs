@@ -6,10 +6,10 @@ import icon from 'astro-icon';
 export default defineConfig({
   site: 'https://josecruzado.github.io',
   trailingSlash: 'ignore',
-  prefetch: {
-    prefetchAll: false,
-    defaultStrategy: 'hover',
-  },
+  // El sitio es one-page (index + 404). El prefetch automático de Astro
+  // solo aplica a anchors entre páginas, así que aquí no aporta. El CV
+  // se preload manualmente vía <link rel="prefetch"> en SEO.astro.
+  prefetch: false,
   integrations: [
     icon({
       include: {
@@ -30,14 +30,12 @@ export default defineConfig({
           'git',
           'github',
           'linkedin',
-          'gmail',
           'jenkins',
           'terraform',
           'openapiinitiative',
           'sonarqube',
           'angular',
           'nodedotjs',
-          'redhatopenshift',
         ],
       },
     }),

@@ -13,6 +13,18 @@
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
     U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  /* Metric overrides para que el fallback (system-ui / -apple-system)
+     ocupe el mismo box que Inter durante el swap. Con el preload
+     de la fuente activo, en la mayoría de cargas el swap no ocurre
+     (Inter ya está disponible antes del primer paint). Estos valores
+     actúan solo como safety net en visitas sin cache o red lenta.
+     size-adjust 100% evita re-escalar — Inter vs -apple-system tienen
+     x-heights muy similares; 107% lo hacía visible como "shrink"
+     post-swap. */
+  size-adjust: 100%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
 
 @font-face {
@@ -25,6 +37,14 @@
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
     U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  /* Cascadia se usa en .display headings — son LCP-adjacent y cualquier
+     shift es perceptible. Con preload, la fuente está disponible antes
+     del primer paint. size-adjust 100% mantiene el render del fallback
+     1:1 sin re-escalar, evitando el "shrink" visible que producía 95%. */
+  size-adjust: 100%;
+  ascent-override: 87%;
+  descent-override: 24%;
+  line-gap-override: 0%;
 }
 
 body {
@@ -37,7 +57,9 @@ body {
   transition:
     background-color var(--duration-base) var(--ease-out),
     color var(--duration-base) var(--ease-out);
-  overflow-x: hidden;
+  /* overflow-x se gestiona en reset.css (html { overflow-x: clip }).
+     `clip` no genera scroll context y preserva position: sticky en
+     los exp__panels, cosa que `hidden` rompía silenciosamente. */
 }
 
 .ambient-bg {
@@ -45,6 +67,14 @@ body {
   inset: 0;
   z-index: -1;
   pointer-events: none;
+  /* Promoción explícita a capa GPU: el ambient tiene 3 radial gradients
+     + grid pattern (::after) + dots (::before). Sin promoción el browser
+     puede componerlo en el mismo layer del body → cada scroll fuerza
+     repaint del stack completo. Con translateZ(0) entra a su propia
+     textura GPU; el scroll solo desplaza el viewport, sin repintar.
+     contain: paint refuerza el aislamiento de paint hijos. */
+  transform: translateZ(0);
+  contain: layout paint style;
   background:
     radial-gradient(
       32rem circle at var(--ambient-x, 74vw) var(--ambient-y, 24vh),
@@ -140,6 +170,16 @@ body {
   font-size: 0.92em;
 }
 
+/* Texto con gradient accent (cyan → blue → violet). Uso reservado a
+   focal points raros — 1 elemento por página máximo (regla del sistema). */
+.gradient-text {
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
 @media (max-width: 768px), (prefers-reduced-motion: reduce) {
   .ambient-bg {
     background:
@@ -158,5 +198,85 @@ body {
       64px 64px,
       128px 128px;
     opacity: 0.45;
+  }
+}
+
+/* Respeta usuarios que reducen transparencias del SO (macOS/iOS). */
+@media (prefers-reduced-transparency: reduce) {
+  .ambient-bg {
+    display: none;
+  }
+}
+
+/* =============================================================
+   Scroll-perf — pausa animaciones infinitas y simplifica el blur
+   del nav mientras el usuario hace scroll. El compositor del browser
+   ya está ocupado componiendo el scroll; estas reglas evitan que
+   compita simultáneamente contra animaciones y backdrop-filter.
+   El estado .is-scrolling lo gestiona scroll/scrollend en BaseLayout.
+   ============================================================= */
+html.is-scrolling .hero__avatar,
+html.is-scrolling .hero__avatar-backdrop,
+html.is-scrolling .hero__status,
+html.is-scrolling .hero__scroll-line,
+html.is-scrolling .tech-glow::after {
+  animation-play-state: paused;
+}
+
+/* =============================================================
+   forced-colors (Windows High Contrast / WCAG 2.2 mandatory 2025+).
+   En este modo el SO sustituye colores por su paleta del sistema.
+   Las superficies con color-mix/backdrop-filter colapsan a Canvas,
+   los gradientes pierden contraste, y los borders desaparecen
+   porque usan rgba con baja opacidad. Estas reglas restablecen
+   los bordes con CanvasText y eliminan capas decorativas que
+   distraen sin aportar información.
+   ============================================================= */
+@media (forced-colors: active) {
+  .ambient-bg,
+  .card__spotlight,
+  .hero__avatar-backdrop {
+    display: none;
+  }
+
+  .card,
+  .nav__inner,
+  .btn,
+  .badge,
+  .skill-item,
+  .education__icon,
+  .project__icon {
+    border: 1px solid CanvasText;
+    box-shadow: none;
+  }
+
+  .btn--primary {
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  /* SystemColor `LinkText` para enlaces — el SO los pinta visibles
+     incluso si nuestro color-fg-muted queda fuera del esquema. */
+  .contact__link,
+  .nav__item {
+    color: LinkText;
+  }
+}
+
+/* =============================================================
+   View Transitions — crossfade del theme toggle.
+   Sin keyframes propios el browser aplica el fade default;
+   esta regla solo afina la duración para coordinar con --duration-base.
+   ============================================================= */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--duration-base);
+  animation-timing-function: var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
   }
 }

@@ -11,26 +11,35 @@ import type { HTMLAttributes } from 'astro/types';
 type Variant = 'primary' | 'secondary' | 'link';
 type Size = 'sm' | 'md' | 'lg';
 
-type Props = (HTMLAttributes<'a'> | HTMLAttributes<'button'>) & {
-  as?: 'a' | 'button';
+type CommonProps = {
   variant?: Variant;
   size?: Size;
+  class?: string;
 };
 
-const props = Astro.props;
+/**
+ * Discriminated union: cuando `as="button"` se aceptan props de <button>
+ * (incl. `type`, `disabled`) y se rechaza `href`. Cuando `as="a"` (default)
+ * se aceptan props de <a> (incl. `href`, `target`, `download`) y se rechaza
+ * `type="submit"`. Esto evita la unión laxa que permitía mezclar atributos.
+ */
+type Props =
+  | (CommonProps & { as?: 'a' } & HTMLAttributes<'a'>)
+  | (CommonProps & { as: 'button' } & HTMLAttributes<'button'>);
+
 const {
   as = 'a',
   variant = 'primary',
   size = 'md',
   class: className,
   ...rest
-} = props as Props & { class?: string };
+} = Astro.props as Props;
 
 const Tag = as;
 const classes = ['btn', `btn--${variant}`, `btn--${size}`, className].filter(Boolean).join(' ');
 ---
 
-<Tag class={classes} {...rest as Record<string, unknown>}>
+<Tag class={classes} {...(rest as Record<string, unknown>)}>
   <slot />
 </Tag>
 
@@ -46,12 +55,28 @@ const classes = ['btn', `btn--${variant}`, `btn--${size}`, className].filter(Boo
     border-radius: var(--radius-md);
     border: 1px solid transparent;
     cursor: pointer;
-    transition: all var(--duration-fast) var(--ease-out);
+    /* Transición específica (no `all`) — evita repintar propiedades no
+       declaradas y reduce el cost del compositor en hover masivo. */
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out),
+      box-shadow var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out),
+      transform var(--duration-fast) var(--ease-out);
     white-space: nowrap;
   }
 
   .btn:active {
     transform: scale(0.96);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn {
+      transition: none;
+    }
+    .btn:active {
+      transform: none;
+    }
   }
 
   .btn--sm {
@@ -69,11 +94,11 @@ const classes = ['btn', `btn--${variant}`, `btn--${size}`, className].filter(Boo
 
   .btn--primary {
     background: var(--color-accent);
-    color: #001014;
+    color: var(--color-accent-fg);
     box-shadow: 0 0 12px var(--color-accent-soft);
   }
   .btn--primary:hover {
-    background: #22d3ee;
+    background: var(--color-accent-hover);
     box-shadow: 0 0 20px rgba(34, 211, 238, 0.4);
   }
 

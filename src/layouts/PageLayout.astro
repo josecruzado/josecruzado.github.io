@@ -16,7 +16,14 @@ const props = Astro.props;
 
 <BaseLayout {...props}>
   <FloatingNav />
-  <main id="main">
+  <!--
+    tabindex="-1" permite que el skip-link mueva el foco aquí
+    realmente. Sin esto el browser hace scroll a #main pero deja el
+    foco en <body>; el siguiente Tab cae en el nav, frustrando el
+    propósito del skip (WCAG 2.4.1). -1 lo hace programáticamente
+    enfocable sin entrar en el orden tabular natural.
+  -->
+  <main id="main" tabindex="-1">
     <slot />
   </main>
 </BaseLayout>

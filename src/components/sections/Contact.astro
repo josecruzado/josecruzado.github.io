@@ -1,5 +1,6 @@
 ---
 import Section from '../ui/Section.astro';
+import Button from '../ui/Button.astro';
 import Icon from '../ui/Icon.astro';
 import { SITE } from '../../lib/site';
 
@@ -44,19 +45,21 @@ const links = [
     </p>
 
     <div class="contact__primary">
-      <a class="contact__button" href={SITE.social.email}>
+      <Button href={SITE.social.email} variant="primary" size="md">
         <Icon name="lucide:send" size={17} />
         Enviar email
-      </a>
-      <button
-        class="contact__button contact__button--secondary"
+      </Button>
+      <Button
+        as="button"
         type="button"
+        variant="secondary"
+        size="md"
         data-copy-email={emailAddress}
       >
         <Icon name="lucide:copy" size={17} />
         Copiar correo
-      </button>
-      <span class="contact__copy-status" data-copy-status aria-live="polite"></span>
+      </Button>
+      <span class="contact__copy-status" data-copy-status role="status" aria-live="polite"></span>
     </div>
 
     <ul class="contact__links" role="list">
@@ -67,7 +70,7 @@ const links = [
               class="contact__link"
               href={link.href}
               target={link.external ? '_blank' : undefined}
-              rel={link.external ? 'noopener me' : undefined}
+              rel={link.external ? 'noopener noreferrer me' : undefined}
             >
               <span class="contact__link-label">{link.label}</span>
               <span class="contact__link-value">
@@ -86,6 +89,18 @@ const links = [
 <script>
   const copyButton = document.querySelector<HTMLButtonElement>('[data-copy-email]');
   const copyStatus = document.querySelector<HTMLElement>('[data-copy-status]');
+  // Limpiar el feedback tras 3s para evitar que screen readers
+  // re-anuncien el estado stale en re-focus / re-navegación.
+  let clearTimer: number | undefined;
+
+  function announce(text: string) {
+    if (!copyStatus) return;
+    copyStatus.textContent = text;
+    if (clearTimer) window.clearTimeout(clearTimer);
+    clearTimer = window.setTimeout(() => {
+      if (copyStatus) copyStatus.textContent = '';
+    }, 3000);
+  }
 
   copyButton?.addEventListener('click', async () => {
     const emailAddress = copyButton.dataset.copyEmail;
@@ -93,9 +108,9 @@ const links = [
 
     try {
       await navigator.clipboard.writeText(emailAddress);
-      if (copyStatus) copyStatus.textContent = 'Correo copiado';
+      announce('Correo copiado');
     } catch {
-      if (copyStatus) copyStatus.textContent = emailAddress;
+      announce(emailAddress);
     }
   });
 </script>
@@ -117,6 +132,7 @@ const links = [
     line-height: 0.95;
     letter-spacing: 0;
     margin: 0;
+    text-wrap: balance;
   }
 
   .contact__question em {
@@ -138,45 +154,17 @@ const links = [
     gap: var(--space-3);
   }
 
-  .contact__button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-2);
-    min-height: 2.75rem;
-    padding-inline: var(--space-5);
-    border-radius: var(--radius-md);
-    background: var(--color-accent);
-    color: #001014;
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-medium);
-    border: 1px solid transparent;
-    transition:
-      background-color var(--duration-fast) var(--ease-out),
-      border-color var(--duration-fast) var(--ease-out),
-      color var(--duration-fast) var(--ease-out);
-  }
-
-  .contact__button:hover {
-    background: #22d3ee;
-  }
-
-  .contact__button--secondary {
-    background: var(--color-surface);
-    border-color: var(--color-border);
-    color: var(--color-fg);
-  }
-
-  .contact__button--secondary:hover {
-    background: var(--color-surface-hover);
-    border-color: var(--color-border-strong);
-  }
-
   .contact__copy-status {
     min-height: 1.4em;
     color: var(--color-fg-subtle);
     font-size: var(--text-sm);
+  }
+
+  /* Reserva visual solo cuando hay feedback activo. Antes el min-height
+     1.4em quedaba ocupado siempre, creando un gap vacío al lado de los
+     CTAs. aria-live sigue funcionando: el span existe en el DOM. */
+  .contact__copy-status:empty {
+    display: none;
   }
 
   .contact__links {
@@ -255,13 +243,16 @@ const links = [
       align-items: stretch;
     }
 
-    .contact__button {
+    .contact__primary :global(.btn) {
       width: 100%;
       min-height: 2.9rem;
     }
 
+    /* Centramos el feedback para mantener coherencia con los
+       botones full-width centered de arriba. */
     .contact__copy-status {
       width: 100%;
+      text-align: center;
     }
 
     .contact__link {
