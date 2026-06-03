@@ -124,13 +124,9 @@ const imageUrl = new URL(image, SITE.url).href;
 <meta name="twitter:image" content={imageUrl} />
 <meta name="twitter:image:alt" content={`${SITE.author.name} — ${SITE.author.role}`} />
 
-<!-- Favicons. El SVG es el primario (escalable, oscuro y claro).
-     El PNG 420x420 (mismo size que declara manifest.webmanifest) cubre
-     iOS home screen y dispositivos sin soporte SVG. -->
-<!-- sizes="any" sobre el SVG: instruye a Chrome 99+/Edge a preferirlo
-     como icono primario en cualquier resolución (escalable). Sin el
-     atributo, en algunos casos prefería el PNG raster. -->
-<link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg" />
+<!-- Favicons — el memoji 420x420 sirve tanto para la pestaña del browser
+     como para el ícono de iOS home screen. Browsers modernos downscale
+     bien a 16x16 / 32x32. Mismo asset = un solo request cacheado. -->
 <link rel="icon" type="image/png" sizes="420x420" href="/apple-touch-icon.png" />
 <link rel="apple-touch-icon" sizes="420x420" href="/apple-touch-icon.png" />
 
