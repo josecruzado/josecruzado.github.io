@@ -62,75 +62,39 @@ body {
      los exp__panels, cosa que `hidden` rompía silenciosamente. */
 }
 
+/* Ambient-bg simplificado — antes: 3 radial gradients + grid pattern
+   (::after) + dots (::before) + cursor follow vía --ambient-x/y CSS
+   vars setteadas en pointermove. Cambios para reducir paint cost
+   (especialmente el initial paint y los cambios al cursor follow):
+   - 1 sólo radial gradient sutil, posición fija
+   - sin pseudo-elementos
+   - sin cursor tracking (el pointermove listener en BaseLayout queda
+     sin consumer, será removido)
+   - GPU layer promoción mantenida vía translateZ + contain
+   El portfolio pierde la "magia" del fondo que sigue el cursor + la
+   textura granular del grid/dots, pero gana scroll fluido. */
 .ambient-bg {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  /* Promoción explícita a capa GPU: el ambient tiene 3 radial gradients
-     + grid pattern (::after) + dots (::before). Sin promoción el browser
-     puede componerlo en el mismo layer del body → cada scroll fuerza
-     repaint del stack completo. Con translateZ(0) entra a su propia
-     textura GPU; el scroll solo desplaza el viewport, sin repintar.
-     contain: paint refuerza el aislamiento de paint hijos. */
   transform: translateZ(0);
   contain: layout paint style;
-  background:
-    radial-gradient(
-      32rem circle at var(--ambient-x, 74vw) var(--ambient-y, 24vh),
-      rgba(6, 182, 212, 0.09),
-      rgba(6, 182, 212, 0.032) 36%,
-      transparent 68%
-    ),
-    radial-gradient(52rem circle at 88% 12%, rgba(37, 99, 235, 0.065), transparent 60%),
-    radial-gradient(38rem circle at 10% 74%, rgba(6, 182, 212, 0.035), transparent 62%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.014), transparent 26%);
-  opacity: 1;
-}
-
-.ambient-bg::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(6, 182, 212, 0.026) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(6, 182, 212, 0.02) 1px, transparent 1px),
-    radial-gradient(circle, rgba(6, 182, 212, 0.08) 0 1px, transparent 1.5px);
-  background-size:
-    76px 76px,
-    76px 76px,
-    152px 152px;
-  mask-image:
-    radial-gradient(circle at 50% 18%, rgba(0, 0, 0, 0.58), transparent 58%),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.62), transparent 76%);
-  opacity: 0.75;
-}
-
-.ambient-bg::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 18% 34%, rgba(6, 182, 212, 0.09) 0 2px, transparent 2.5px),
-    radial-gradient(circle at 32% 48%, rgba(6, 182, 212, 0.07) 0 1.5px, transparent 2px),
-    radial-gradient(circle at 72% 30%, rgba(59, 130, 246, 0.075) 0 2px, transparent 2.5px),
-    radial-gradient(circle at 80% 58%, rgba(6, 182, 212, 0.06) 0 1.5px, transparent 2px);
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent 68%);
-  opacity: 0.7;
+  background: radial-gradient(
+    36rem circle at 74vw 22vh,
+    rgba(6, 182, 212, 0.075),
+    rgba(6, 182, 212, 0.025) 38%,
+    transparent 70%
+  );
 }
 
 [data-theme='light'] .ambient-bg {
-  background:
-    radial-gradient(
-      32rem circle at var(--ambient-x, 74vw) var(--ambient-y, 24vh),
-      rgba(6, 182, 212, 0.13),
-      rgba(6, 182, 212, 0.04) 36%,
-      transparent 68%
-    ),
-    radial-gradient(52rem circle at 88% 12%, rgba(37, 99, 235, 0.08), transparent 60%),
-    radial-gradient(38rem circle at 10% 74%, rgba(6, 182, 212, 0.045), transparent 62%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 26%);
-  opacity: 0.82;
+  background: radial-gradient(
+    36rem circle at 74vw 22vh,
+    rgba(6, 182, 212, 0.11),
+    rgba(6, 182, 212, 0.035) 38%,
+    transparent 70%
+  );
 }
 
 ::selection {
@@ -182,22 +146,7 @@ body {
 
 @media (max-width: 768px), (prefers-reduced-motion: reduce) {
   .ambient-bg {
-    background:
-      radial-gradient(28rem circle at 50% 7rem, rgba(6, 182, 212, 0.08), transparent 70%),
-      radial-gradient(30rem circle at 90% 22rem, rgba(37, 99, 235, 0.05), transparent 68%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.012), transparent 24%);
-  }
-
-  .ambient-bg::before {
-    display: none;
-  }
-
-  .ambient-bg::after {
-    background-size:
-      64px 64px,
-      64px 64px,
-      128px 128px;
-    opacity: 0.45;
+    background: radial-gradient(28rem circle at 50% 7rem, rgba(6, 182, 212, 0.06), transparent 70%);
   }
 }
 
@@ -209,32 +158,19 @@ body {
 }
 
 /* =============================================================
-   Scroll-perf — pausa animaciones infinitas y simplifica el blur
-   del nav mientras el usuario hace scroll. El compositor del browser
-   ya está ocupado componiendo el scroll; estas reglas evitan que
-   compita simultáneamente contra animaciones y backdrop-filter.
-   El estado .is-scrolling lo gestiona scroll/scrollend en BaseLayout.
+   Scroll-perf — pausa la única animación infinita restante (float
+   del avatar) mientras el usuario hace scroll. Tras la simplificación,
+   solo .hero__avatar queda con animación infinita; el resto ahora son
+   estáticas o one-shot. .is-scrolling lo gestiona BaseLayout.
    ============================================================= */
-html.is-scrolling .hero__avatar,
-html.is-scrolling .hero__avatar-backdrop,
-html.is-scrolling .hero__status,
-html.is-scrolling .hero__status::before,
-html.is-scrolling .hero__scroll-line,
-html.is-scrolling .tech-glow::after {
+html.is-scrolling .hero__avatar {
   animation-play-state: paused;
 }
 
-/* Page Visibility: cuando la pestaña queda oculta (document.hidden=true)
-   BaseLayout añade .is-page-hidden a <html>. Pausamos las animaciones
-   infinitas exactamente como en scroll. El browser ya pausa requestAnimation-
-   Frame por sí solo, pero las CSS animations siguen ejecutándose en
-   compositor — esta regla las congela explícitamente. */
-html.is-page-hidden .hero__avatar,
-html.is-page-hidden .hero__avatar-backdrop,
-html.is-page-hidden .hero__status,
-html.is-page-hidden .hero__status::before,
-html.is-page-hidden .hero__scroll-line,
-html.is-page-hidden .tech-glow::after {
+/* Page Visibility: cuando la pestaña queda oculta, también pausamos.
+   Browser ya frena rAF; CSS animations siguen en compositor sin
+   esta regla — explícito y seguro. */
+html.is-page-hidden .hero__avatar {
   animation-play-state: paused;
 }
 

@@ -181,18 +181,11 @@ import memoji from '../../assets/memoji.png';
     background: radial-gradient(circle at center, var(--color-accent-soft) 0%, transparent 70%);
     filter: blur(20px);
     z-index: 1;
-    animation: pulse-glow 4s ease-in-out infinite alternate;
-  }
-
-  @keyframes pulse-glow {
-    0% {
-      transform: scale(0.9);
-      opacity: 0.5;
-    }
-    100% {
-      transform: scale(1.1);
-      opacity: 0.8;
-    }
+    /* pulse-glow eliminado — el backdrop ahora es estático.
+       Antes anima scale + opacity infinitamente, sumando work GPU
+       continuo. Mantiene visual identity (resplandor cyan detrás
+       del memoji) sin coste por frame. */
+    opacity: 0.7;
   }
 
   .hero__meta {
@@ -205,9 +198,11 @@ import memoji from '../../assets/memoji.png';
     letter-spacing: 0.02em;
     padding: 0.25rem 0.75rem;
     border-radius: var(--radius-full);
-    background: var(--color-surface);
+    /* bg opaco (was: var(--color-surface) + backdrop-filter: blur(8px)).
+       El backdrop-filter forzaba re-sample del fondo en cada frame de
+       scroll mientras el meta era visible. Bg sólido elimina el costo. */
+    background: var(--color-bg-elevated);
     border: 1px solid var(--color-border);
-    backdrop-filter: blur(8px);
   }
 
   .highlight {
@@ -228,33 +223,9 @@ import memoji from '../../assets/memoji.png';
     flex-shrink: 0;
   }
 
-  /* ::before genera el anillo expansivo que pulsa. Vive en z-index: -1
-     (debajo del dot) y se escala con transform. La opacidad va de 1→0
-     en el medio del ciclo, simulando un onda que se desvanece.
-     Visualmente equivalente al pattern anterior de box-shadow, pero
-     compositor-friendly: en mobile y monitores 144Hz el cost de paint
-     por frame es ~0 frente a los ~1-2ms del box-shadow original. */
-  .hero__status::before {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border-radius: 50%;
-    background: var(--color-success-ring);
-    z-index: -1;
-    animation: pulse-soft 2.4s ease-in-out infinite;
-  }
-
-  @keyframes pulse-soft {
-    0%,
-    100% {
-      transform: scale(1);
-      opacity: 1;
-    }
-    50% {
-      transform: scale(2);
-      opacity: 0;
-    }
-  }
+  /* pulse-soft eliminado — el status dot ahora se ve solo con su
+     box-shadow estático en .hero__status. Cero animación, indicación
+     visual de "disponible" preservada (el dot verde + ring). */
 
   .hero__title {
     font-size: var(--text-6xl);
@@ -426,32 +397,15 @@ import memoji from '../../assets/memoji.png';
     width: 1px;
     height: 4rem;
     background: linear-gradient(to bottom, transparent, var(--color-fg-subtle));
-    animation: scroll-line 2.5s ease-in-out infinite;
+    /* Animación scroll-line eliminada — línea estática como hint
+       direccional. Cero work en compositor cada 2.5s. */
   }
 
-  @keyframes scroll-line {
-    0%,
-    100% {
-      transform: scaleY(1);
-      transform-origin: bottom;
-      opacity: 1;
-    }
-    50% {
-      transform: scaleY(0.4);
-      transform-origin: bottom;
-      opacity: 0.3;
-    }
-  }
-
-  /* Respeto integral de reduced-motion en cualquier viewport: las
-     animaciones decorativas (float, pulse-glow, slide-in, scroll-line,
-     pulse-soft) no deben ejecutarse si el usuario las desactiva. La
-     regla anterior solo cubría mobile vía override de animation: none. */
+  /* Respeto integral de reduced-motion en cualquier viewport.
+     Solo queda float del avatar como animación infinita; tech-glow
+     es one-shot (slide-in entrada, 0.8s). */
   @media (prefers-reduced-motion: reduce) {
     .hero__avatar,
-    .hero__avatar-backdrop,
-    .hero__status::before,
-    .hero__scroll-line,
     .tech-glow::after {
       animation: none;
     }

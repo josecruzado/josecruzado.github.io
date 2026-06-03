@@ -73,8 +73,7 @@ const {
         html.js-anim .hero__title,
         html.js-anim .hero__statement,
         html.js-anim .hero__stats,
-        html.js-anim .hero__actions,
-        html.js-anim .project {
+        html.js-anim .hero__actions {
           opacity: 1 !important;
           transform: none !important;
         }
@@ -130,31 +129,6 @@ const {
       import '../scripts/animations.ts';
 
       const rootElement = document.documentElement;
-      const canTrackPointer =
-        window.matchMedia('(pointer: fine)').matches &&
-        !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-      if (canTrackPointer) {
-        let pointerFrame = 0;
-        let pointerX = window.innerWidth * 0.72;
-        let pointerY = window.innerHeight * 0.28;
-
-        window.addEventListener(
-          'pointermove',
-          (event) => {
-            pointerX = event.clientX;
-            pointerY = event.clientY;
-
-            if (pointerFrame) return;
-            pointerFrame = requestAnimationFrame(() => {
-              rootElement.style.setProperty('--ambient-x', `${pointerX}px`);
-              rootElement.style.setProperty('--ambient-y', `${pointerY}px`);
-              pointerFrame = 0;
-            });
-          },
-          { passive: true }
-        );
-      }
 
       // Scroll perf optimization — pausa animaciones infinitas y simplifica
       // el backdrop-filter del nav mientras el usuario hace scroll. Reduce
@@ -202,32 +176,9 @@ const {
         rootElement.classList.toggle('is-page-hidden', document.hidden);
       });
 
-      // IntersectionObserver para revelar tarjetas al scrollear.
-      // El estado inicial oculto lo aplica .js-anim vía CSS (utilities.css),
-      // antes del primer paint — sin FOUC y sin necesidad de inyectar
-      // clases extras via JS. El hero NO se incluye: lo controla Motion.
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('is-revealed');
-              observer.unobserve(entry.target);
-            }
-          });
-        },
-        { rootMargin: '0px', threshold: 0.1 }
-      );
-
-      function registerRevealTargets() {
-        document.querySelectorAll<HTMLElement>('.project').forEach((el) => {
-          if (el.dataset.revealRegistered === 'true') return;
-          el.dataset.revealRegistered = 'true';
-          observer.observe(el);
-        });
-      }
-
-      registerRevealTargets();
-      document.addEventListener('astro:page-load', registerRevealTargets);
+      // Reveal de .project ahora vía native scroll-driven animations
+      // (animation-timeline: view() en utilities.css). Sin IntersectionObserver,
+      // sin handlers, sin clases dinámicas. Browser interpola en compositor.
     </script>
   </body>
 </html>

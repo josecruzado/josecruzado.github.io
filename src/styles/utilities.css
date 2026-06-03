@@ -72,15 +72,36 @@ main[tabindex='-1']:focus {
   margin: 0;
 }
 
-/* Reveal-on-scroll para tarjetas (Projects, Experience).
-   La opacidad/transform inicial los aplica .js-anim (abajo) para evitar
-   FOUC. IntersectionObserver añade .is-revealed cuando entran al viewport. */
-.is-revealed {
-  opacity: 1;
-  transform: translateY(0);
-  transition:
-    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+/* Reveal-on-scroll vía native scroll-driven animations (Baseline 2024).
+   Sustituye IntersectionObserver + .is-revealed. Ventajas:
+   - Compositor-only: el browser interpola opacity/transform por viewport
+     position sin disparar JS callbacks
+   - Cero overhead JS (sin observer, sin handlers, sin clases dinámicas)
+   - Declarativo: el rango y curva viven en CSS
+
+   Fallback: en browsers sin animation-timeline (Firefox < flag, Safari
+   estable < 26 al momento de escribir) la animación es ignorada y los
+   elementos se muestran en su final-state inmediatamente (opacity: 1,
+   transform: none por defecto). Graceful degradation. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .project {
+      animation: reveal-card linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
+}
+
+@keyframes reveal-card {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* .js-anim se aplica antes del primer paint (script inline en BaseLayout)
@@ -93,13 +114,4 @@ html.js-anim .hero__statement,
 html.js-anim .hero__stats,
 html.js-anim .hero__actions {
   opacity: 0;
-}
-
-html.js-anim .project {
-  opacity: 0;
-  transform: translateY(20px);
-  /* will-change INTENCIONALMENTE OMITIDO. Promociona cada card a su
-     propia GPU layer permanentemente, consumiendo memoria que no
-     necesitamos (las cards animan UNA vez al revelar y luego son
-     estáticas). El browser auto-optimiza transform+opacity sin hint. */
 }

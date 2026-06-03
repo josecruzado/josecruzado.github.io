@@ -4,21 +4,6 @@
    se usa con extrema parquedad (solo focal points clave).
    ============================================================= */
 
-/* =============================================================
-   @property declarations — custom properties tipadas.
-   Permiten interpolación/animación y mejor DX en DevTools.
-   ============================================================= */
-@property --ambient-x {
-  syntax: '<length-percentage>';
-  inherits: true;
-  initial-value: 74vw;
-}
-@property --ambient-y {
-  syntax: '<length-percentage>';
-  inherits: true;
-  initial-value: 24vh;
-}
-
 :root {
   /* Habilita la función light-dark() y permite que data-theme
      coordine con el computed color-scheme. Cada [data-theme=*]

@@ -200,16 +200,12 @@ const navItems = SITE.nav;
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    /* Blur estable de 8px (antes 12px): reducción de ~44% del cost
-       del backdrop-filter por frame de scroll, sin el "pop" visible
-       que generaba toggle on/off entre estados. El background queda
-       constante para que no haya cambio perceptible al iniciar/terminar
-       scroll. Combinado con contain: paint, el nav se compone en su
-       propia capa GPU y el blur se cachea entre frames cuando el
-       contenido detrás no se mueve. */
-    background: color-mix(in srgb, var(--color-bg-elevated) 92%, transparent);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
+    /* bg sólido — el backdrop-filter previo (blur 8px) costaba ~3-8ms
+       por frame de scroll en GPU mid-range porque el browser samplea +
+       blurea la capa de atrás cada frame. Quitarlo lleva el cost al
+       compositor a ~0.5ms. El nav pierde el efecto frosted glass pero
+       mantiene su silueta clara contra el contenido. */
+    background: var(--color-bg-elevated);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-full);
     padding: 0.4rem 0.5rem 0.4rem 0.65rem;
