@@ -8,6 +8,8 @@ startDate: '2021-08-01'
 endDate: '2022-07-31'
 isCurrent: false
 order: 3
+companyUrl: 'https://www.nttdata.com/'
+companyWikidata: 'https://www.wikidata.org/wiki/Q5963895'
 summary: >-
   Desarrollo y mantenimiento de microservicios de integración con couriers para los
   flujos logísticos del e-commerce de ZARA (Inditex), trabajando en un entorno

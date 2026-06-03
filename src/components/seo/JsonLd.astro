@@ -18,22 +18,46 @@ const knowsAbout = SKILLS.flatMap((category) => category.skills.map((s) => s.nam
 
 const experiences = (await getCollection('experience')).sort((a, b) => a.data.order - b.data.order);
 const currentExperience = experiences.find((e) => e.data.isCurrent) ?? experiences[0];
-const worksForName = currentExperience?.data.company ?? 'Independent';
 
-// hasOccupation enriquece el rich snippet de Google con
-// responsibilities, location y categoría ocupacional estandarizada
-// (SOC code 15-1252.00 = Software Developers, Applications).
-const occupation = {
-  '@type': 'Occupation',
-  name: SITE.author.role,
-  occupationLocation: {
-    '@type': 'City',
-    name: `${SITE.author.location.city}, ${SITE.author.location.country}`,
-  },
-  skills: knowsAbout.join(', '),
-  responsibilities: SITE.author.bio,
-  occupationalCategory: '15-1252.00',
+// `endDate: 'present'` (texto humano) se normaliza a undefined para que
+// Schema.org no reciba un valor no-fecha. Los crawlers infieren "vigente"
+// por la ausencia de endDate (patrón estándar Schema.org).
+const toIsoEnd = (raw: string): string | undefined =>
+  raw && raw !== 'present' ? raw : undefined;
+
+// worksFor: Organization actual enriquecida con url y sameAs (Wikidata)
+// cuando están disponibles → señal fuerte para el Knowledge Graph.
+const worksFor: Record<string, unknown> = {
+  '@type': 'Organization',
+  name: currentExperience?.data.company ?? 'Independent',
 };
+if (currentExperience?.data.companyUrl) worksFor.url = currentExperience.data.companyUrl;
+if (currentExperience?.data.companyWikidata)
+  worksFor.sameAs = currentExperience.data.companyWikidata;
+
+// hasOccupation como ARRAY — una Occupation por cada experience.
+// Enriquece el rich snippet con la trayectoria completa: responsibilities
+// derivadas de achievements, skills derivadas de technologies, fechas
+// ISO, ubicación. La occupational category 15-1252.00 (SOC: Software
+// Developers, Applications) se aplica solo a la actual.
+const occupations = experiences.map((exp) => {
+  const item: Record<string, unknown> = {
+    '@type': 'Occupation',
+    name: exp.data.role,
+    description: exp.data.summary,
+    startDate: exp.data.startDate,
+    occupationLocation: {
+      '@type': 'City',
+      name: exp.data.location,
+    },
+    skills: exp.data.technologies.join(', '),
+    responsibilities: exp.data.achievements.join(' | '),
+  };
+  const endDate = toIsoEnd(exp.data.endDate);
+  if (endDate) item.endDate = endDate;
+  if (exp.data.isCurrent) item.occupationalCategory = '15-1252.00';
+  return item;
+});
 
 const graph = {
   '@context': 'https://schema.org',
@@ -56,15 +80,12 @@ const graph = {
         addressLocality: SITE.author.location.city,
         addressCountry: SITE.author.location.countryCode,
       },
-      worksFor: {
-        '@type': 'Organization',
-        name: worksForName,
-      },
+      worksFor,
       alumniOf: {
         '@type': 'CollegeOrUniversity',
         name: SITE.author.university,
       },
-      hasOccupation: occupation,
+      hasOccupation: occupations,
       knowsAbout,
       knowsLanguage: SITE.author.languages.map((lang) => ({
         '@type': 'Language',

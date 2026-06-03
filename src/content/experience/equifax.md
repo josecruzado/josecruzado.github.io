@@ -8,6 +8,7 @@ startDate: '2022-08-01'
 endDate: '2024-10-31'
 isCurrent: false
 order: 2
+companyUrl: 'https://www.manpowergroup.com.pe/'
 summary: >-
   Trabajé en el Security Squad LATAM y el Decisioning Squad de Equifax Perú. Remediación de
   vulnerabilidades reportadas por Fortify y pentests, además del rediseño de procesos ETL

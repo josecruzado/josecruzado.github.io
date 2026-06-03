@@ -8,6 +8,8 @@ startDate: '2024-11-01'
 endDate: 'present'
 isCurrent: true
 order: 1
+companyUrl: 'https://www.tcs.com'
+companyWikidata: 'https://www.wikidata.org/wiki/Q610228'
 summary: >-
   Desarrollo de microservicios críticos para la red ATM del BCP dentro de la Tribu de
   Canales Alternativos. Arquitectura event-driven, despliegues GitOps sobre Azure AKS

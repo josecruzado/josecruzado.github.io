@@ -17,6 +17,16 @@ const experience = defineCollection({
     achievements: z.array(z.string()).min(1),
     technologies: z.array(z.string()),
     order: z.number(),
+    /**
+     * URL pública de la empresa — enriquece worksFor/hasOccupation
+     * en JSON-LD para que Google asocie la entidad correctamente.
+     */
+    companyUrl: z.url().optional(),
+    /**
+     * Wikidata ID URL (https://www.wikidata.org/wiki/Q...) — se emite
+     * como sameAs en JSON-LD, máxima señal para Knowledge Graph.
+     */
+    companyWikidata: z.url().optional(),
   }),
 });
 
