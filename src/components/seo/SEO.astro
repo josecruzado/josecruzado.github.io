@@ -73,9 +73,16 @@ const imageUrl = new URL(image, SITE.url).href;
 <link rel="alternate" hreflang="es" href={SITE.url} />
 <link rel="alternate" hreflang="x-default" href={SITE.url} />
 
-<!-- Theme color reactivo al esquema preferido -->
+<!-- Theme color:
+     - 2 metas con media query: fallback estático para el primer paint
+       (cuando el JS aún no se ejecutó) y para el caso sin JS.
+     - 1 meta sin media (data-dynamic-theme): JS la actualiza al usar
+       el toggle. Browsers priorizan la no-media cuando existe → el
+       status bar refleja la elección manual del usuario, no solo el
+       prefers-color-scheme del SO. -->
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content={SITE.seo.themeColorDark} />
 <meta name="theme-color" media="(prefers-color-scheme: light)" content={SITE.seo.themeColorLight} />
+<meta name="theme-color" data-dynamic-theme content={SITE.seo.themeColorDark} />
 <meta name="color-scheme" content="dark light" />
 
 <!-- Install-as-app: el estándar moderno es `mobile-web-app-capable`.

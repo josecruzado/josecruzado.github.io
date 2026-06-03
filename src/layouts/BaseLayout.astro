@@ -59,7 +59,9 @@ const {
     <link rel="preload" href={cascadiaVariable} as="font" type="font/woff2" crossorigin />
     <link rel="manifest" href="/manifest.webmanifest" />
     <!-- Theme bootstrap — aplicado antes del primer paint para evitar
-         flash de tema incorrecto. Lee localStorage o prefers-color-scheme. -->
+         flash de tema incorrecto. Lee localStorage o prefers-color-scheme,
+         setea data-theme, y sincroniza meta theme-color dinámico para
+         que la status bar del browser refleje la elección desde el inicio. -->
     <script is:inline>
       (() => {
         const html = document.documentElement;
@@ -68,7 +70,10 @@ const {
           const prefers = window.matchMedia('(prefers-color-scheme: light)').matches
             ? 'light'
             : 'dark';
-          html.dataset.theme = saved || prefers;
+          const theme = saved || prefers;
+          html.dataset.theme = theme;
+          const meta = document.querySelector('meta[data-dynamic-theme]');
+          if (meta) meta.setAttribute('content', theme === 'light' ? '#ffffff' : '#000000');
         } catch (_) {
           /* SSR/no-storage: usa el default del HTML */
         }
