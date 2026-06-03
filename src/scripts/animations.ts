@@ -36,9 +36,7 @@ const FALLBACK_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 function readEaseFromCss(): [number, number, number, number] {
   try {
-    const raw = getComputedStyle(document.documentElement)
-      .getPropertyValue('--ease-out')
-      .trim();
+    const raw = getComputedStyle(document.documentElement).getPropertyValue('--ease-out').trim();
     const match = raw.match(/cubic-bezier\(([^)]+)\)/);
     if (!match) return FALLBACK_EASE;
     const values = match[1].split(',').map((v) => Number(v.trim()));
@@ -114,4 +112,3 @@ function runMagneticButtons() {
     });
   });
 }
-

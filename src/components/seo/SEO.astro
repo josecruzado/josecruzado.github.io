@@ -144,9 +144,9 @@ const imageUrl = new URL(image, SITE.url).href;
      ven carga instantánea. Chrome 121+ / Edge 121+ (Baseline candidate
      2024). Browsers sin soporte ignoran el script silenciosamente —
      fallback graceful, el download sigue funcionando vía request normal. -->
-<script type="speculationrules" is:inline
-  >{"prefetch":[{"source":"list","urls":["/cv.pdf"],"eagerness":"moderate"}]}</script
->
+<script type="speculationrules" is:inline>
+  { "prefetch": [{ "source": "list", "urls": ["/cv.pdf"], "eagerness": "moderate" }] }
+</script>
 
 <!-- Hint para acelerar conexiones a recursos externos clave -->
 <link rel="preconnect" href="https://github.com" />

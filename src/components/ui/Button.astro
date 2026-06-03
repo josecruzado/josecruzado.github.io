@@ -39,7 +39,7 @@ const Tag = as;
 const classes = ['btn', `btn--${variant}`, `btn--${size}`, className].filter(Boolean).join(' ');
 ---
 
-<Tag class={classes} {...(rest as Record<string, unknown>)}>
+<Tag class={classes} {...rest as Record<string, unknown>}>
   <slot />
 </Tag>
 

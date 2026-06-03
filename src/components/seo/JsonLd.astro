@@ -22,8 +22,7 @@ const currentExperience = experiences.find((e) => e.data.isCurrent) ?? experienc
 // `endDate: 'present'` (texto humano) se normaliza a undefined para que
 // Schema.org no reciba un valor no-fecha. Los crawlers infieren "vigente"
 // por la ausencia de endDate (patrón estándar Schema.org).
-const toIsoEnd = (raw: string): string | undefined =>
-  raw && raw !== 'present' ? raw : undefined;
+const toIsoEnd = (raw: string): string | undefined => (raw && raw !== 'present' ? raw : undefined);
 
 // worksFor: Organization actual enriquecida con url y sameAs (Wikidata)
 // cuando están disponibles → señal fuerte para el Knowledge Graph.
