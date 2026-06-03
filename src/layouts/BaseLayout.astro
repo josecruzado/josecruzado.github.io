@@ -58,28 +58,8 @@ const {
     <link rel="preload" href={interVariable} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={cascadiaVariable} as="font" type="font/woff2" crossorigin />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <!--
-      Safety net para usuarios sin JS habilitado: el script inline de
-      abajo añade .js-anim a <html> y deja invisibles hero+cards hasta
-      que Motion los revele. Sin JS, el setTimeout nunca dispara y los
-      elementos quedarían ocultos los 1.5s del safety timeout. Este
-      <noscript> los fuerza visibles desde el primer paint cuando el
-      JS está bloqueado, sin afectar el flujo normal con JS habilitado.
-    -->
-    <noscript>
-      <style>
-        html.js-anim .hero__avatar-wrapper,
-        html.js-anim .hero__meta,
-        html.js-anim .hero__title,
-        html.js-anim .hero__statement,
-        html.js-anim .hero__stats,
-        html.js-anim .hero__actions {
-          opacity: 1 !important;
-          transform: none !important;
-        }
-      </style>
-    </noscript>
-    <!-- Theme + animaciones — aplicados antes del primer paint para evitar FOUC -->
+    <!-- Theme bootstrap — aplicado antes del primer paint para evitar
+         flash de tema incorrecto. Lee localStorage o prefers-color-scheme. -->
     <script is:inline>
       (() => {
         const html = document.documentElement;
@@ -92,23 +72,6 @@ const {
         } catch (_) {
           /* SSR/no-storage: usa el default del HTML */
         }
-        // .js-anim oculta el hero hasta que Motion ejecute el spring
-        // stagger. En mobile NO se aplica: el entrance se siente mejor
-        // sin animación (evita flash y lag percibido sobre redes lentas).
-        // Si JS falla o reduced-motion está activo, el safety timeout
-        // y/o el script principal la retiran.
-        try {
-          const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-          const isMobile = window.matchMedia('(max-width: 768px)').matches;
-          if (!reducedMotion && !isMobile) {
-            html.classList.add('js-anim');
-            // Safety net acortado a 1500ms: si Motion no inicia (red lenta,
-            // JS deshabilitado, bundle bloqueado), el contenido aparece en
-            // ≤1.5s en lugar de quedar invisible hasta 4s. Motion sigue
-            // siendo quien retira la clase normalmente, mucho antes.
-            setTimeout(() => html.classList.remove('js-anim'), 1500);
-          }
-        } catch (_) {}
       })();
     </script>
   </head>
@@ -118,14 +81,13 @@ const {
     <slot />
 
     <script>
-      // Smooth scroll global para anchor clicks (#xxx). Reemplaza
-      // el CSS scroll-behavior: smooth que afectaba al scroll natural.
+      // Smooth scroll global para anchor clicks (#xxx) vía scrollIntoView
+      // nativo + scroll-padding-top del browser. Sin librería.
       import '../scripts/smooth-scroll.ts';
 
-      // Motion-powered animations: hero entrance, magnetic hover, card lift.
-      // Importado a nivel de página — se incluye en el chunk principal de
-      // Astro pero el módulo internamente respeta reduced-motion y solo
-      // ejecuta hovers en pointer:fine.
+      // Magnetic hover en CTAs primarios (CV + Enviar email + dock CV).
+      // Solo ~30 LOC, sin Motion. Hero entrance vía CSS keyframes
+      // (utilities.css). Card lift vía CSS :hover (Card.astro).
       import '../scripts/animations.ts';
 
       // Page Visibility API: pausa la animación infinita restante (float

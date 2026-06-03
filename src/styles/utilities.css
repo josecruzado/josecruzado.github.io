@@ -72,17 +72,56 @@ main[tabindex='-1']:focus {
   margin: 0;
 }
 
-/* Reveal-on-scroll vía native scroll-driven animations (Baseline 2024).
-   Sustituye IntersectionObserver + .is-revealed. Ventajas:
-   - Compositor-only: el browser interpola opacity/transform por viewport
-     position sin disparar JS callbacks
-   - Cero overhead JS (sin observer, sin handlers, sin clases dinámicas)
-   - Declarativo: el rango y curva viven en CSS
+/* =============================================================
+   Hero entrance — CSS keyframes con animation-fill-mode: backwards.
+   Reemplaza el stagger programático de Motion. `backwards` aplica el
+   from-state durante el animation-delay → elementos empiezan invisibles
+   y se revelan en cascada SIN necesidad de pre-hide vía .js-anim.
+   El total de delays va de 0 a 460ms (igual stagger que tenía Motion).
+   ============================================================= */
+@media (prefers-reduced-motion: no-preference) {
+  .hero__avatar-wrapper,
+  .hero__meta,
+  .hero__title,
+  .hero__statement,
+  .hero__stats,
+  .hero__actions {
+    animation: hero-stagger 0.75s var(--ease-out) backwards;
+  }
+  .hero__meta {
+    animation-delay: 50ms;
+  }
+  .hero__title {
+    animation-delay: 120ms;
+  }
+  .hero__statement {
+    animation-delay: 260ms;
+  }
+  .hero__stats {
+    animation-delay: 360ms;
+  }
+  .hero__actions {
+    animation-delay: 460ms;
+  }
+}
 
-   Fallback: en browsers sin animation-timeline (Firefox < flag, Safari
-   estable < 26 al momento de escribir) la animación es ignorada y los
-   elementos se muestran en su final-state inmediatamente (opacity: 1,
-   transform: none por defecto). Graceful degradation. */
+@keyframes hero-stagger {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* =============================================================
+   Reveal-on-scroll vía native scroll-driven animations (Baseline 2024).
+   Sustituye IntersectionObserver + .is-revealed. Compositor-only.
+   Fallback: en browsers sin animation-timeline (Safari estable < 26)
+   los elementos se muestran en su final-state directo. Graceful.
+   ============================================================= */
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     .project {
@@ -104,14 +143,26 @@ main[tabindex='-1']:focus {
   }
 }
 
-/* .js-anim se aplica antes del primer paint (script inline en BaseLayout)
-   solo en desktop sin reduced-motion. Sin JS los items quedan visibles
-   por default — graceful degradation total. */
-html.js-anim .hero__avatar-wrapper,
-html.js-anim .hero__meta,
-html.js-anim .hero__title,
-html.js-anim .hero__statement,
-html.js-anim .hero__stats,
-html.js-anim .hero__actions {
-  opacity: 0;
+/* =============================================================
+   Magnetic CTAs — pointermove en JS escribe --mx/--my, la transición
+   y aplicación viven aquí. Usa la propiedad nativa `translate` (no
+   `transform`) para no entrar en conflicto con `transform: scale(0.96)`
+   del estado :active del .btn. Baseline 2023.
+   ============================================================= */
+@media (hover: hover) and (pointer: fine) {
+  .btn--primary,
+  .nav__cv,
+  .contact__link {
+    transition: translate var(--duration-base) var(--ease-out);
+    translate: var(--mx, 0) var(--my, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn--primary,
+  .nav__cv,
+  .contact__link {
+    translate: 0 0;
+    transition: none;
+  }
 }
