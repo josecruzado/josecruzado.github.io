@@ -128,57 +128,17 @@ const {
       // ejecuta hovers en pointer:fine.
       import '../scripts/animations.ts';
 
-      const rootElement = document.documentElement;
-
-      // Scroll perf optimization — pausa animaciones infinitas y simplifica
-      // el backdrop-filter del nav mientras el usuario hace scroll. Reduce
-      // significativamente el work del compositor (especialmente en GPU
-      // de gama media/baja) donde:
-      //   - pulse-soft anima box-shadow (no GPU-accelerated → repaint)
-      //   - backdrop-filter del nav re-bluerea cada frame de scroll
-      // El estado se marca con .is-scrolling en <html>; el CSS aplica
-      // animation-play-state: paused y reduce el blur.
-      let scrollEndTimer: number | undefined;
-      const markScrollStart = () => {
-        if (!rootElement.classList.contains('is-scrolling')) {
-          rootElement.classList.add('is-scrolling');
-        }
-        if (scrollEndTimer) window.clearTimeout(scrollEndTimer);
-        scrollEndTimer = window.setTimeout(() => {
-          rootElement.classList.remove('is-scrolling');
-        }, 180);
-      };
-
-      window.addEventListener(
-        'scroll',
-        () => {
-          markScrollStart();
-        },
-        { passive: true }
-      );
-
-      // scrollend (Baseline 2024) limpia el flag con más precisión que el
-      // timeout. El timeout queda como fallback para Safari estable.
-      window.addEventListener(
-        'scrollend',
-        () => {
-          if (scrollEndTimer) window.clearTimeout(scrollEndTimer);
-          rootElement.classList.remove('is-scrolling');
-        },
-        { passive: true }
-      );
-
-      // Page Visibility API: pausa las animaciones infinitas cuando la
-      // pestaña queda oculta (usuario en otra tab/ventana). Evita GPU
-      // activity sostenida sin observador → mejora battery life en
-      // mobile y libera ciclos en CPU/GPU para la tab activa.
+      // Page Visibility API: pausa la animación infinita restante (float
+      // del avatar) cuando la pestaña queda oculta. Battery saver real
+      // en mobile + libera ciclos para la tab activa. El listener de
+      // scroll-state previo fue removido: con solo 1 animación GPU-cheap
+      // restante, el overhead del listener superaba el beneficio.
       document.addEventListener('visibilitychange', () => {
-        rootElement.classList.toggle('is-page-hidden', document.hidden);
+        document.documentElement.classList.toggle('is-page-hidden', document.hidden);
       });
 
-      // Reveal de .project ahora vía native scroll-driven animations
-      // (animation-timeline: view() en utilities.css). Sin IntersectionObserver,
-      // sin handlers, sin clases dinámicas. Browser interpola en compositor.
+      // Reveal de .project vía native scroll-driven animations
+      // (animation-timeline: view() en utilities.css). Sin IntersectionObserver.
     </script>
   </body>
 </html>

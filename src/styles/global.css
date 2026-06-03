@@ -157,19 +157,11 @@ body {
   }
 }
 
-/* =============================================================
-   Scroll-perf — pausa la única animación infinita restante (float
-   del avatar) mientras el usuario hace scroll. Tras la simplificación,
-   solo .hero__avatar queda con animación infinita; el resto ahora son
-   estáticas o one-shot. .is-scrolling lo gestiona BaseLayout.
-   ============================================================= */
-html.is-scrolling .hero__avatar {
-  animation-play-state: paused;
-}
-
-/* Page Visibility: cuando la pestaña queda oculta, también pausamos.
-   Browser ya frena rAF; CSS animations siguen en compositor sin
-   esta regla — explícito y seguro. */
+/* Page Visibility: pausa la animación infinita restante (float del
+   avatar) cuando la pestaña queda oculta. Browser frena rAF pero CSS
+   animations siguen en compositor — esta regla las congela explícito.
+   El sistema is-scrolling fue removido: con 1 animación GPU-cheap
+   restante el overhead del listener superaba el beneficio. */
 html.is-page-hidden .hero__avatar {
   animation-play-state: paused;
 }
@@ -185,7 +177,6 @@ html.is-page-hidden .hero__avatar {
    ============================================================= */
 @media (forced-colors: active) {
   .ambient-bg,
-  .card__spotlight,
   .hero__avatar-backdrop {
     display: none;
   }
