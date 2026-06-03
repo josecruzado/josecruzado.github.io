@@ -9,12 +9,31 @@
 import { getCollection } from 'astro:content';
 import { SITE } from '../../lib/site';
 import { SKILLS } from '../../lib/skills';
+import { EDUCATION } from '../../lib/education';
 
 const personId = `${SITE.url}/#person`;
 const websiteId = `${SITE.url}/#website`;
 const profileId = `${SITE.url}/#profile`;
 
 const knowsAbout = SKILLS.flatMap((category) => category.skills.map((s) => s.name));
+
+// hasCredential derivado de EDUCATION (filtra el degree que ya va en
+// alumniOf). Cada item tiene credentialCategory normalizada y la fecha
+// ISO en dateCreated para que Google AI pueda mencionar "X obtained Y
+// certification in 2024".
+const CREDENTIAL_CATEGORY: Record<string, string> = {
+  certification: 'Professional Certificate',
+  course: 'Course Completion',
+  language: 'Language Certification',
+};
+
+const hasCredential = EDUCATION.filter((e) => e.type !== 'degree').map((e) => ({
+  '@type': 'EducationalOccupationalCredential',
+  name: e.title,
+  credentialCategory: CREDENTIAL_CATEGORY[e.type] ?? 'Credential',
+  recognizedBy: { '@type': 'Organization', name: e.institution },
+  ...(e.datetime ? { dateCreated: e.datetime.split('/')[1] || e.datetime } : {}),
+}));
 
 const experiences = (await getCollection('experience')).sort((a, b) => a.data.order - b.data.order);
 const currentExperience = experiences.find((e) => e.data.isCurrent) ?? experiences[0];
@@ -83,14 +102,27 @@ const graph = {
       alumniOf: {
         '@type': 'CollegeOrUniversity',
         name: SITE.author.university,
+        url: 'https://www.upn.edu.pe',
       },
       hasOccupation: occupations,
+      hasCredential,
       knowsAbout,
       knowsLanguage: SITE.author.languages.map((lang) => ({
         '@type': 'Language',
         name: lang.name,
         alternateName: lang.code,
       })),
+      nationality: { '@type': 'Country', name: 'Peru' },
+      // seeks (Demand): señal explícita para Google AI de que estás
+      // activamente abierto a roles senior backend. Ayuda al perfil
+      // aparezca en respuestas a queries como "who is available for
+      // remote senior backend java roles in latam".
+      seeks: {
+        '@type': 'Demand',
+        name: 'Senior Backend Java Developer roles',
+        description:
+          'Open to remote senior backend positions building scalable microservices on JVM stack (Spring Boot, Quarkus, Kafka, AWS, Azure AKS).',
+      },
       sameAs: [SITE.social.linkedin, SITE.social.github],
     },
     {
