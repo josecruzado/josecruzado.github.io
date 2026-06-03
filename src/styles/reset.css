@@ -37,6 +37,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
   /* overflow-x: clip se aplica solo en <html> — duplicarlo en body
      genera doble contenedor de clip sin beneficio. */
+  /* overscroll-behavior: contain previene el scroll chain a la
+     ventana padre. En iOS Safari evita que el bounce en el top/bottom
+     dispare pull-to-refresh accidental. Production standard
+     (Notion, Linear, GitHub usan este pattern). */
+  overscroll-behavior: contain;
 }
 
 /* text-rendering: optimizeLegibility solo en displays/headings.
@@ -72,11 +77,19 @@ button {
   border: none;
   cursor: pointer;
   padding: 0;
+  /* touch-action: manipulation desactiva double-tap-to-zoom en iOS,
+     eliminando el 300ms tap delay. -webkit-tap-highlight-color
+     transparent quita el flash azul nativo al tap. Ambos production
+     standard para sensación nativa en mobile. */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 ul[role='list'],

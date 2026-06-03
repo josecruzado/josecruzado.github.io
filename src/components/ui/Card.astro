@@ -56,8 +56,12 @@ const classes = ['card', interactive && 'card--interactive', className].filter(B
     height: 100%;
     overflow: hidden;
     isolation: isolate;
+    /* border-color con --duration-fast (150ms) para feel snappy al
+       hover — Apple/Linear/Stripe usan ~150ms para cambios de estado
+       reactivos. transform mantiene --duration-base (280ms) para que
+       el lift visual tenga peso natural. */
     transition:
-      border-color var(--duration-base) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out),
       transform var(--duration-base) var(--ease-out);
   }
 
