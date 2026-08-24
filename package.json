@@ -20,8 +20,8 @@
     "@fontsource-variable/inter": "^5.2.8",
     "@iconify-json/lucide": "^1.2.111",
     "@iconify-json/simple-icons": "^1.2.84",
-    "astro": "^6.4.2",
-    "astro-icon": "^1.1.5"
+    "astro": "^7.2.4",
+    "astro-icon": "^1.2.0"
   },
   "overrides": {
     "postcss": "^8.5.10",
