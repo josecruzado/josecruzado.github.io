@@ -5,7 +5,12 @@ import Icon from '../components/ui/Icon.astro';
 ---
 
 <BaseLayout title="Página no encontrada" description="La página solicitada no existe." noindex>
-  <main id="main" class="notfound">
+  {
+    /* tabindex="-1" por el mismo motivo que en PageLayout: sin él el
+       skip-link hace scroll a #main pero deja el foco en <body>, y el
+       siguiente Tab cae en el nav (WCAG 2.4.1). */
+  }
+  <main id="main" class="notfound" tabindex="-1">
     <div class="container notfound__inner">
       <p class="notfound__code gradient-text">404</p>
       <h1 class="notfound__title">Esta página no existe</h1>
