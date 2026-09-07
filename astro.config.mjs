@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig, fontProviders } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import icon from 'astro-icon';
 
@@ -10,6 +10,31 @@ export default defineConfig({
   // solo aplica a anchors entre páginas, así que aquí no aporta. El CV
   // se preload manualmente vía <link rel="prefetch"> en SEO.astro.
   prefetch: false,
+  // Fonts API nativa. Astro descarga las fuentes en build, las auto-aloja,
+  // emite los @font-face con subsetting y genera los <link rel=preload>
+  // desde el componente <Font />. Sustituye a los @font-face escritos a
+  // mano en global.css y al import `?url` que existía solo para que el
+  // preload apuntara al mismo archivo hasheado que el @font-face.
+  fonts: [
+    {
+      name: 'Inter',
+      cssVariable: '--font-inter',
+      provider: fontProviders.fontsource(),
+      weights: ['100 900'],
+      styles: ['normal'],
+      subsets: ['latin'],
+      fallbacks: ['-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+    },
+    {
+      name: 'Cascadia Code',
+      cssVariable: '--font-cascadia',
+      provider: fontProviders.fontsource(),
+      weights: ['200 700'],
+      styles: ['normal'],
+      subsets: ['latin'],
+      fallbacks: ['ui-monospace', 'SF Mono', 'Menlo', 'monospace'],
+    },
+  ],
   // CSP nativo (security.csp, estable desde Astro 6.0). Astro calcula el
   // hash SHA-256 de cada script y estilo inline durante el build y emite
   // él mismo el <meta http-equiv="content-security-policy">, así que

@@ -6,13 +6,8 @@
 import '../styles/global.css';
 import SEO from '../components/seo/SEO.astro';
 import JsonLd from '../components/seo/JsonLd.astro';
+import { Font } from 'astro:assets';
 import { SITE } from '../lib/site';
-// `?url` import: Astro/Vite emiten el archivo al pipeline de assets y
-// devuelven la URL hasheada final (misma que la del @font-face en CSS).
-// Garantiza que el preload apunte al mismo archivo que cargará el browser,
-// no a una ruta paralela que generaría una doble descarga.
-import interVariable from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
-import cascadiaVariable from '@fontsource-variable/cascadia-code/files/cascadia-code-latin-wght-normal.woff2?url';
 
 const htmlLang = SITE.locale.split('-')[0];
 
@@ -48,17 +43,14 @@ const {
     />
     <JsonLd />
     {
-      /*
-      Preload de las dos fuentes variables ANTES del CSS para que el
-      browser inicie la descarga en el momento más temprano posible
-      del head parsing. Combinado con font-display: swap y size-adjust,
-      la fuente real está disponible antes del primer paint en la
-      mayoría de los casos → sin FOUT visible. crossorigin es requerido
-      por la spec para fonts (CORS) incluso same-origin.
-    */
+      /* <Font /> emite el @font-face y, con preload, el <link rel=preload>
+         apuntando al mismo archivo hasheado. Va antes del CSS para que la
+         descarga arranque en el punto más temprano del parsing del head.
+         Las dos fuentes se precargan porque ambas son visibles en el primer
+         viewport: Inter en el cuerpo e Cascadia en los display headings. */
     }
-    <link rel="preload" href={interVariable} as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href={cascadiaVariable} as="font" type="font/woff2" crossorigin />
+    <Font cssVariable="--font-inter" preload />
+    <Font cssVariable="--font-cascadia" preload />
     <link rel="manifest" href="/manifest.webmanifest" />
     {
       /* Theme bootstrap — aplicado antes del primer paint para evitar

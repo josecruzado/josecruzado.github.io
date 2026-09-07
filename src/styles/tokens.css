@@ -56,9 +56,13 @@
   --color-surface-hover: light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.06));
 
   /* ---------- Tipografía ---------- */
-  --font-sans: 'Inter Variable', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-display: 'Cascadia Code Variable', 'JetBrains Mono', monospace;
-  --font-mono: 'Cascadia Code Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+  /* --font-inter y --font-cascadia las declara la Fonts API de Astro
+     (ver `fonts` en astro.config.mjs). Cada una ya incluye su cadena de
+     fallbacks con los metric overrides calculados a partir de las
+     métricas reales de la fuente, así que aquí no se repiten. */
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-cascadia);
+  --font-mono: var(--font-cascadia);
 
   /* Fluid type scale */
   --text-xs: clamp(0.75rem, 0.72rem + 0.15vw, 0.8125rem);
