@@ -92,7 +92,11 @@ const graph = {
       url: SITE.url,
       image: new URL(SITE.seo.ogImage, SITE.url).href,
       email: SITE.author.email,
-      telephone: SITE.author.phoneE164,
+      // Sin `telephone`: el número viajaba en texto plano dentro del
+      // @graph, y los scrapers de datos estructurados son el vector
+      // principal de spam telefónico. Para el Knowledge Graph no aporta
+      // ninguna señal que `email` + `sameAs` no cubran ya. El teléfono
+      // sigue disponible en el CV en PDF, donde el contacto es deliberado.
       address: {
         '@type': 'PostalAddress',
         addressLocality: SITE.author.location.city,

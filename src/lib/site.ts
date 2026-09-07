@@ -21,8 +21,6 @@ export const SITE = {
       'Backend Java Senior con 6+ años en banca, seguridad y e-commerce. Microservicios, Kafka, AWS, Azure AKS.',
     location: { city: 'Lima', country: 'Perú', countryCode: 'PE' },
     email: 'josecruzado.1206@gmail.com',
-    phone: '+51 936 144 446',
-    phoneE164: '+51936144446',
     languages: [
       { name: 'Español', level: 'Nativo', code: 'es' },
       { name: 'Inglés', level: 'B2', code: 'en' },
