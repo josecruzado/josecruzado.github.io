@@ -114,7 +114,10 @@ p {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  /* accent-text, no accent: el ring de foco es un indicador de estado y
+     debe cumplir 3:1 (SC 1.4.11). El accent decorativo da 2,33:1 sobre
+     el fondo claro y dejaría el foco de teclado casi invisible. */
+  outline: 2px solid var(--color-accent-text);
   outline-offset: 3px;
   /* border-radius INTENCIONALMENTE OMITIDO. Browsers modernos
      (Chrome 94+, Safari 16.4+, Firefox 88+) hacen que el outline

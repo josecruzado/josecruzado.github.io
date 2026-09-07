@@ -10,8 +10,17 @@
      aplica pre-paint en el script inline de BaseLayout → siempre
      hay un valor antes del primer render). */
 
-  /* ---------- Acento único (estable entre temas) ---------- */
+  /* ---------- Acento único ---------- */
+  /* Acento DECORATIVO: bordes, rings, glows, fondo del botón primario.
+     Estable entre temas — es una superficie, no contenido. */
   --color-accent: #06b6d4;
+  /* Acento TIPOGRÁFICO: todo lo que sea texto o icono pintado en accent.
+     #06b6d4 sobre el fondo claro (#fafafa) da 2,33:1 — falla WCAG AA
+     (4,5:1) y también el 3:1 de contraste no textual (SC 1.4.11). En
+     light se oscurece a #0e7490 → 5,13:1 sobre #fafafa y 5,36:1 sobre
+     #ffffff; sobre el fondo teñido del badge accent, 4,62:1. En dark el
+     valor original ya cumple (8,39:1) y no cambia. */
+  --color-accent-text: light-dark(#0e7490, #06b6d4);
   --color-accent-hover: #22d3ee;
   --color-accent-fg: #001014;
   --color-accent-soft: rgba(6, 182, 212, 0.12);

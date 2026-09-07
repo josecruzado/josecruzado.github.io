@@ -34,7 +34,9 @@
   z-index: var(--z-modal);
   padding: 0.75rem 1.25rem;
   background: var(--color-accent);
-  color: var(--color-bg);
+  /* accent-fg (#001014), no color-bg: en tema claro color-bg es #fafafa
+     y daba 2,33:1 sobre el cyan. accent-fg da 7,98:1 en ambos temas. */
+  color: var(--color-accent-fg);
   font-weight: var(--weight-semibold);
   border-radius: var(--radius-md);
   transition: inset-block-start var(--duration-fast) var(--ease-out);

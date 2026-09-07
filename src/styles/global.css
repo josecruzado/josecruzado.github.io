@@ -99,7 +99,8 @@ body {
 
 ::selection {
   background: var(--color-accent);
-  color: var(--color-bg);
+  /* Ver skip-link: color-bg en light no contrasta contra el accent. */
+  color: var(--color-accent-fg);
 }
 
 /* Display headings use Cascadia Code */
@@ -119,7 +120,7 @@ body {
   font-weight: var(--weight-medium);
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
-  color: var(--color-accent);
+  color: var(--color-accent-text);
 }
 
 .eyebrow::before {

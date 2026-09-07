@@ -219,7 +219,7 @@ const experiences = (await getCollection('experience')).sort((a, b) => a.data.or
   .exp__tab.is-active {
     color: var(--color-fg);
     padding-left: var(--space-3);
-    border-left: 2px solid var(--color-accent);
+    border-left: 2px solid var(--color-accent-text);
   }
 
   .exp__tab-period {
@@ -270,7 +270,7 @@ const experiences = (await getCollection('experience')).sort((a, b) => a.data.or
     grid-row: 1 / 3;
     opacity: 0;
     transition: opacity var(--duration-base) var(--ease-out);
-    color: var(--color-accent);
+    color: var(--color-accent-text);
     justify-self: end;
   }
 
@@ -333,7 +333,7 @@ const experiences = (await getCollection('experience')).sort((a, b) => a.data.or
   }
 
   .exp__panel-company {
-    color: var(--color-accent);
+    color: var(--color-accent-text);
     font-weight: var(--weight-medium);
     margin-top: var(--space-1);
   }
