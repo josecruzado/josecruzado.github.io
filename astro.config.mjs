@@ -38,6 +38,15 @@ export default defineConfig({
   // solo aplica a anchors entre páginas, así que aquí no aporta. El CV
   // se preload manualmente vía <link rel="prefetch"> en SEO.astro.
   prefetch: false,
+  markdown: {
+    // Las colecciones de content/ solo aportan frontmatter: su cuerpo no
+    // se renderiza nunca, así que no hay bloques de código que resaltar.
+    // Se desactiva porque, con CSP activo, Shiki emite estilos inline que
+    // la política rechaza y Astro avisa de ello en cada build. Si algún
+    // día se renderiza markdown con código, la vía compatible con CSP es
+    // syntaxHighlight: 'prism'.
+    syntaxHighlight: false,
+  },
   // Fonts API nativa. Astro descarga las fuentes en build, las auto-aloja,
   // emite los @font-face con subsetting y genera los <link rel=preload>
   // desde el componente <Font />. Sustituye a los @font-face escritos a
