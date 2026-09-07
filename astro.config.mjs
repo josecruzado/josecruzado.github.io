@@ -82,6 +82,19 @@ export default defineConfig({
     sitemap(),
   ],
   build: {
-    inlineStylesheets: 'auto',
+    // 'always' en vez de 'auto'. Con 'auto' ninguno de los dos CSS bajaba
+    // del umbral de inlining, así que el navegador hacía dos peticiones
+    // bloqueantes antes del primer paint. El sitio tiene una sola página
+    // real: no hay una segunda navegación que aproveche el CSS cacheado,
+    // que era la única ventaja de mantenerlo aparte.
+    //
+    // Medido en Chromium (mobile 390x844, 4G lento 1,6 Mbps / 150ms RTT,
+    // CPU x4, mediana de 7 cargas):
+    //   auto    FCP 656ms · LCP 936ms · 5 subrecursos
+    //   always  FCP 448ms · LCP 496ms · 3 subrecursos
+    //
+    // Y transfiere menos: 32.266 B brotli en un recurso frente a 33.060 B
+    // repartidos en tres, porque un único flujo comprime mejor que tres.
+    inlineStylesheets: 'always',
   },
 });
