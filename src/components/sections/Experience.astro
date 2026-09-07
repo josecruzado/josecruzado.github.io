@@ -7,7 +7,7 @@ import Icon from '../ui/Icon.astro';
 const experiences = (await getCollection('experience')).sort((a, b) => a.data.order - b.data.order);
 ---
 
-<Section id="experiencia" ariaLabel="Experiencia">
+<Section id="experiencia" ariaLabel="Experiencia" shape="tabs">
   <SectionHeader eyebrow="02 · Trayectoria" size="lg" class="section-header--lg-gap">
     Seis años entregando <em>backend</em> que importa.
   </SectionHeader>
