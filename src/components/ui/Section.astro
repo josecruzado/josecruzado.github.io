@@ -7,7 +7,6 @@
 interface Props {
   id: string;
   ariaLabel?: string;
-  narrow?: boolean;
   fullHeight?: boolean;
   /**
    * Habilita `content-visibility: auto` — el browser omite el render
@@ -22,13 +21,11 @@ interface Props {
 const {
   id,
   ariaLabel,
-  narrow = false,
   fullHeight = false,
   lazyRender = !fullHeight,
   class: className,
 } = Astro.props;
 
-const containerClass = narrow ? 'container container--narrow' : 'container';
 const sectionClass = [
   'section',
   fullHeight && 'section--full',
@@ -40,7 +37,7 @@ const sectionClass = [
 ---
 
 <section class={sectionClass} aria-label={ariaLabel} data-nav-section={id}>
-  <div id={id} class={containerClass}>
+  <div id={id} class="container">
     <slot />
   </div>
 </section>

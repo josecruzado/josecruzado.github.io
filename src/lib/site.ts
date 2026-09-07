@@ -5,7 +5,6 @@
 export const SITE = {
   url: 'https://josecruzado.github.io',
   locale: 'es-PE',
-  alternateLocale: 'en-US',
 
   author: {
     name: 'José Félix Cruzado Vega',
@@ -13,12 +12,7 @@ export const SITE = {
     firstName: 'José Félix',
     lastName: 'Cruzado Vega',
     role: 'Senior Backend Java Developer',
-    headline: 'Senior Backend Java Developer · Spring · Quarkus · Cloud',
-    tagline:
-      'Construyo sistemas backend escalables y de misión crítica con Java, Spring y Quarkus.',
     bio: 'Senior Backend Developer con más de 6 años diseñando, desarrollando y operando microservicios en sectores de banca, riesgo crediticio y retail e-commerce. Especializado en arquitecturas event-driven con Kafka, contratos OpenAPI y entrega continua sobre AWS y Azure (AKS).',
-    bioShort:
-      'Backend Java Senior con 6+ años en banca, seguridad y e-commerce. Microservicios, Kafka, AWS, Azure AKS.',
     location: { city: 'Lima', country: 'Perú', countryCode: 'PE' },
     email: 'josecruzado.1206@gmail.com',
     languages: [
@@ -26,7 +20,6 @@ export const SITE = {
       { name: 'Inglés', level: 'B2', code: 'en' },
     ],
     university: 'Universidad Privada del Norte',
-    degree: 'Bachiller en Ingeniería de Sistemas Computacionales',
   },
 
   social: {
@@ -40,9 +33,6 @@ export const SITE = {
     { value: '4', label: 'Sectores impactados' },
     { value: '10+', label: 'Microservicios en producción' },
   ],
-
-  /** Habilidades destacadas para superficies resumidas. */
-  heroSkills: ['Java', 'Spring Boot', 'Quarkus', 'Kafka', 'AKS · AWS'],
 
   nav: [
     { href: '#inicio', label: 'Inicio', icon: 'lucide:house' },
