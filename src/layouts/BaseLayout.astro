@@ -74,7 +74,13 @@ const {
           const prefers = window.matchMedia('(prefers-color-scheme: light)').matches
             ? 'light'
             : 'dark';
-          const theme = saved || prefers;
+          // Se valida el valor persistido en lugar de confiar en él: un
+          // localStorage corrupto (otra extensión, una clave 'theme'
+          // reutilizada, un valor de una versión anterior) dejaba
+          // data-theme sin coincidir con ningún selector de tokens.css,
+          // el documento se quedaba sin color-scheme y light-dark()
+          // resolvía a claro sobre un HTML que declaraba otro tema.
+          const theme = saved === 'light' || saved === 'dark' ? saved : prefers;
           html.dataset.theme = theme;
           const meta = document.querySelector('meta[data-dynamic-theme]');
           if (meta) meta.setAttribute('content', theme === 'light' ? '#ffffff' : '#000000');
