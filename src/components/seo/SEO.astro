@@ -32,24 +32,25 @@ const canonicalUrl = canonical
 const imageUrl = new URL(image, SITE.url).href;
 ---
 
-<!-- Charset y viewport -->
+{/* Charset y viewport */}
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
-<!-- Title + description -->
+{/* Title + description */}
 <title>{pageTitle}</title>
 <meta name="title" content={pageTitle} />
 <meta name="description" content={description} />
 <meta name="author" content={SITE.author.name} />
 
-<!-- Robots -->
+{/* Robots */}
 <meta
   name="robots"
   content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1'}
 />
 <meta name="googlebot" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
 
-<!-- Hardening — CSP + Referrer.
+{
+  /* Hardening — CSP + Referrer.
      GitHub Pages no permite HTTP headers custom, así que el CSP va vía
      http-equiv, mecanismo que la spec sí contempla para esta cabecera.
      `'unsafe-inline'` es necesario para el JSON-LD y el is:inline script
@@ -61,37 +62,44 @@ const imageUrl = new URL(image, SITE.url).href;
      que había aquí no hacía nada. Solo funciona como header HTTP; si el
      sitio migra a un host que permita cabeceras custom (Cloudflare Pages,
      Netlify), se declara ahí — y con `browsing-topics=()`, no con el
-     `interest-cohort=()` que apuntaba a FLoC, cancelado en 2022. -->
+     `interest-cohort=()` que apuntaba a FLoC, cancelado en 2022. */
+}
 <meta
   http-equiv="Content-Security-Policy"
   content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
 />
 <meta name="referrer" content="strict-origin-when-cross-origin" />
 
-<!-- Canonical -->
+{/* Canonical */}
 <link rel="canonical" href={canonicalUrl} />
 
-<!-- hreflang — el sitio está en español. Si en futuro se añade /en,
-     añadir el hreflang="en" aquí. x-default cubre fallback. -->
+{
+  /* hreflang — el sitio está en español. Si en futuro se añade /en,
+     añadir el hreflang="en" aquí. x-default cubre fallback. */
+}
 <link rel="alternate" hreflang="es" href={SITE.url} />
 <link rel="alternate" hreflang="x-default" href={SITE.url} />
 
-<!-- Theme color:
+{
+  /* Theme color:
      - 2 metas con media query: fallback estático para el primer paint
        (cuando el JS aún no se ejecutó) y para el caso sin JS.
      - 1 meta sin media (data-dynamic-theme): JS la actualiza al usar
        el toggle. Browsers priorizan la no-media cuando existe → el
        status bar refleja la elección manual del usuario, no solo el
-       prefers-color-scheme del SO. -->
+       prefers-color-scheme del SO. */
+}
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content={SITE.seo.themeColorDark} />
 <meta name="theme-color" media="(prefers-color-scheme: light)" content={SITE.seo.themeColorLight} />
 <meta name="theme-color" data-dynamic-theme content={SITE.seo.themeColorDark} />
 <meta name="color-scheme" content="dark light" />
 
-<!-- Install-as-app: el estándar moderno es `mobile-web-app-capable`.
+{
+  /* Install-as-app: el estándar moderno es `mobile-web-app-capable`.
      Mantenemos también `apple-mobile-web-app-capable` porque iOS Safari
      todavía lo requiere para el modo standalone al añadir a pantalla
-     de inicio (no es alias en iOS, es la clave canónica de Apple). -->
+     de inicio (no es alias en iOS, es la clave canónica de Apple). */
+}
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -99,7 +107,7 @@ const imageUrl = new URL(image, SITE.url).href;
 <meta name="application-name" content={`${SITE.author.displayName} · Portfolio`} />
 <meta name="format-detection" content="telephone=no" />
 
-<!-- Open Graph -->
+{/* Open Graph */}
 <meta property="og:type" content={type} />
 <meta property="og:site_name" content={SITE.author.displayName} />
 <meta property="og:title" content={pageTitle} />
@@ -120,39 +128,45 @@ const imageUrl = new URL(image, SITE.url).href;
   )
 }
 
-<!-- Twitter / X -->
+{/* Twitter / X */}
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content={pageTitle} />
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={imageUrl} />
 <meta name="twitter:image:alt" content={`${SITE.author.name} — ${SITE.author.role}`} />
 
-<!-- Favicons — el memoji 420x420 sirve tanto para la pestaña del browser
+{
+  /* Favicons — el memoji 420x420 sirve tanto para la pestaña del browser
      como para el ícono de iOS home screen. Browsers modernos downscale
-     bien a 16x16 / 32x32. Mismo asset = un solo request cacheado. -->
+     bien a 16x16 / 32x32. Mismo asset = un solo request cacheado. */
+}
 <link rel="icon" type="image/png" sizes="420x420" href="/apple-touch-icon.png" />
 <link rel="apple-touch-icon" sizes="420x420" href="/apple-touch-icon.png" />
 
-<!-- Sitemap discoverability -->
+{/* Sitemap discoverability */}
 <link rel="sitemap" type="application/xml" href="/sitemap-index.xml" />
 
-<!-- rel="me" — verificación cruzada de identidad. Permite a indexers,
+{
+  /* rel="me" — verificación cruzada de identidad. Permite a indexers,
      agregadores y Mastodon confirmar que este sitio y los perfiles
-     externos pertenecen a la misma persona. Patrón IndieWeb estándar. -->
+     externos pertenecen a la misma persona. Patrón IndieWeb estándar. */
+}
 <link rel="me" href={SITE.social.linkedin} />
 <link rel="me" href={SITE.social.github} />
 <link rel="me" href={`mailto:${SITE.author.email}`} />
 
-<!-- Speculation Rules: el CV se prefetchea con eagerness "moderate" —
+{
+  /* Speculation Rules: el CV se prefetchea con eagerness "moderate" —
      el browser dispara la descarga al primer hover/focus sobre cualquier
      <a href="/cv.pdf">, no al cargar la página. Resultado: usuarios que
      no descargan el CV no pagan el costo (~250KB) y los que sí lo hacen
      ven carga instantánea. Chrome 121+ / Edge 121+ (Baseline candidate
      2024). Browsers sin soporte ignoran el script silenciosamente —
-     fallback graceful, el download sigue funcionando vía request normal. -->
+     fallback graceful, el download sigue funcionando vía request normal. */
+}
 <script type="speculationrules" is:inline>
   { "prefetch": [{ "source": "list", "urls": ["/cv.pdf"], "eagerness": "moderate" }] }
 </script>
 
-<!-- Hint para acelerar conexiones a recursos externos clave -->
+{/* Hint para acelerar conexiones a recursos externos clave */}
 <link rel="preconnect" href="https://github.com" />

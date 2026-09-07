@@ -47,21 +47,25 @@ const {
       noindex={noindex}
     />
     <JsonLd />
-    <!--
+    {
+      /*
       Preload de las dos fuentes variables ANTES del CSS para que el
       browser inicie la descarga en el momento más temprano posible
       del head parsing. Combinado con font-display: swap y size-adjust,
       la fuente real está disponible antes del primer paint en la
       mayoría de los casos → sin FOUT visible. crossorigin es requerido
       por la spec para fonts (CORS) incluso same-origin.
-    -->
+    */
+    }
     <link rel="preload" href={interVariable} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={cascadiaVariable} as="font" type="font/woff2" crossorigin />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <!-- Theme bootstrap — aplicado antes del primer paint para evitar
+    {
+      /* Theme bootstrap — aplicado antes del primer paint para evitar
          flash de tema incorrecto. Lee localStorage o prefers-color-scheme,
          setea data-theme, y sincroniza meta theme-color dinámico para
-         que la status bar del browser refleje la elección desde el inicio. -->
+         que la status bar del browser refleje la elección desde el inicio. */
+    }
     <script is:inline>
       (() => {
         const html = document.documentElement;
