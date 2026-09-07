@@ -49,21 +49,24 @@ const imageUrl = new URL(image, SITE.url).href;
 />
 <meta name="googlebot" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
 
-<!-- Hardening 2026 — CSP / Referrer / Permissions-Policy.
-     GitHub Pages no permite HTTP headers custom, así que estos van
-     vía http-equiv (válido para CSP y Permissions-Policy).
-     `'unsafe-inline'` es necesario para el JSON-LD y el is:inline
-     script del theme bootstrap; Astro estático no emite nonces.
-     `interest-cohort=()` bloquea FLoC tracking. -->
+<!-- Hardening — CSP + Referrer.
+     GitHub Pages no permite HTTP headers custom, así que el CSP va vía
+     http-equiv, mecanismo que la spec sí contempla para esta cabecera.
+     `'unsafe-inline'` es necesario para el JSON-LD y el is:inline script
+     del theme bootstrap; Astro estático no emite nonces.
+
+     NO hay Permissions-Policy: la spec obliga al cliente a IGNORAR toda
+     política declarada vía <meta http-equiv> (debe estar activa antes de
+     procesar la respuesta y no puede mutar en runtime), así que el meta
+     que había aquí no hacía nada. Solo funciona como header HTTP; si el
+     sitio migra a un host que permita cabeceras custom (Cloudflare Pages,
+     Netlify), se declara ahí — y con `browsing-topics=()`, no con el
+     `interest-cohort=()` que apuntaba a FLoC, cancelado en 2022. -->
 <meta
   http-equiv="Content-Security-Policy"
   content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
 />
 <meta name="referrer" content="strict-origin-when-cross-origin" />
-<meta
-  http-equiv="Permissions-Policy"
-  content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
-/>
 
 <!-- Canonical -->
 <link rel="canonical" href={canonicalUrl} />
