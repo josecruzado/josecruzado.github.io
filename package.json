@@ -18,12 +18,8 @@
     "@astrojs/sitemap": "^3.7.3",
     "@iconify-json/lucide": "^1.2.111",
     "@iconify-json/simple-icons": "^1.2.84",
-    "astro": "^6.4.2",
+    "astro": "^7.3.1",
     "astro-icon": "^1.1.5"
-  },
-  "overrides": {
-    "postcss": "^8.5.10",
-    "rollup": "^4.59.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
