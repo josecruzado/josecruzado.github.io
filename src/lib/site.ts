@@ -28,10 +28,15 @@ export const SITE = {
     email: 'mailto:josecruzado.1206@gmail.com?subject=Oportunidad%20Senior%20Backend%20Java',
   },
 
+  /**
+   * Cifras de impacto. El `id` permite que otras secciones referencien
+   * un stat concreto sin depender del orden del array ni repetir el
+   * número a mano (ver `statValue`).
+   */
   stats: [
-    { value: '6+', label: 'Años de experiencia' },
-    { value: '4', label: 'Sectores impactados' },
-    { value: '10+', label: 'Microservicios en producción' },
+    { id: 'years', value: '6+', label: 'Años de experiencia' },
+    { id: 'sectors', value: '4', label: 'Sectores impactados' },
+    { id: 'services', value: '10+', label: 'Microservicios en producción' },
   ],
 
   nav: [
@@ -54,3 +59,20 @@ export const SITE = {
 } as const;
 
 export type SiteConfig = typeof SITE;
+
+/** Identificadores válidos de `SITE.stats`, derivados del propio array. */
+export type SiteStatId = (typeof SITE.stats)[number]['id'];
+
+/**
+ * Devuelve el valor de una cifra de impacto por id.
+ *
+ * Existe para que ninguna sección vuelva a escribir «6+» a mano: el tipo
+ * `SiteStatId` convierte un id inexistente en error de compilación, así
+ * que renombrar o eliminar un stat rompe el build en vez de dejar dos
+ * cifras divergentes en producción.
+ */
+export function statValue(id: SiteStatId): string {
+  const stat = SITE.stats.find((item) => item.id === id);
+  if (!stat) throw new Error(`SITE.stats: no existe ningún stat con id "${id}"`);
+  return stat.value;
+}

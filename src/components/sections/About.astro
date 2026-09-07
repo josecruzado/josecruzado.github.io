@@ -1,6 +1,7 @@
 ---
 import Section from '../ui/Section.astro';
 import SectionHeader from '../ui/SectionHeader.astro';
+import { statValue } from '../../lib/site';
 ---
 
 <Section id="sobre-mi" ariaLabel="Sobre mí">
@@ -27,14 +28,14 @@ import SectionHeader from '../ui/SectionHeader.astro';
     <div class="metric">
       <dt class="metric__label">Años</dt>
       <dd>
-        <span class="metric__value display">6+</span>
+        <span class="metric__value display">{statValue('years')}</span>
         <span class="metric__note">construyendo backend en producción</span>
       </dd>
     </div>
     <div class="metric">
       <dt class="metric__label">Industrias</dt>
       <dd>
-        <span class="metric__value display">4</span>
+        <span class="metric__value display">{statValue('sectors')}</span>
         <span class="metric__note">banca, riesgo, e-commerce, agroindustria</span>
       </dd>
     </div>
