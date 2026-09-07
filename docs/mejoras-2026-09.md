@@ -329,7 +329,7 @@ Resultado: 0px / 0px / 0px en desktop y 0px / 0px / −2px en mobile.
 
 ## Fase 4 — Plataforma
 
-### [ ] B1 · CSP nativo de Astro ⭐
+### [x] B1 · CSP nativo de Astro ⭐
 
 `SEO.astro:58-61` declara a mano `script-src 'self' 'unsafe-inline'` y
 `style-src 'self' 'unsafe-inline'`. El comentario justifica que «Astro estático
@@ -345,7 +345,7 @@ rules) quedan cubiertos y `'unsafe-inline'` desaparece de ambas directivas.
 reemplazo, no una adición. El CSP no se aplica en `astro dev`; se verifica con
 `npm run preview`.
 
-### [ ] B5 · Actualizaciones menores
+### [x] B5 · Actualizaciones menores
 
 ```
 @astrojs/check      0.9.9   → 0.9.10
@@ -359,7 +359,7 @@ prettier            3.8.3   → 3.9.6
 @iconify-json/simple-icons  1.2.84  → 1.2.94
 ```
 
-### [ ] B2 · Migrar a la Fonts API nativa de Astro
+### [x] B2 · Migrar a la Fonts API nativa de Astro
 
 Hoy conviven: import `?url` con 4 líneas de comentario explicando el mecanismo
 (`BaseLayout.astro:10-15`), dos `<link rel="preload">` manuales, y dos
@@ -379,7 +379,7 @@ escrita (`size-adjust: 100%` evita un «shrink» visible post-swap). Se compara 
 render antes/después y, si Astro genera métricas peores, se conservan las
 manuales vía `fallbacks` explícitos.
 
-### [ ] F · Señales de SEO modernas
+### [x] F · Señales de SEO modernas
 
 - **`llms.txt`** — convención emergente para crawlers de IA. `robots.txt` ya
   abre la puerta a GPTBot/ClaudeBot/Google-Extended; un `/llms.txt` con perfil,
@@ -392,7 +392,7 @@ manuales vía `fallbacks` explícitos.
 
 ## Fase 5 — Astro 7
 
-### [ ] B3 · Evaluación y upgrade
+### [x] B3 · Evaluación y upgrade
 
 Astro 7.3.1 disponible. Cambios relevantes para este proyecto:
 
@@ -409,6 +409,38 @@ Astro 7.3.1 disponible. Cambios relevantes para este proyecto:
 
 **Procedimiento.** Se ejecuta al final, con todo lo demás ya estabilizado, y se
 compara el `dist/index.html` generado antes y después.
+
+---
+
+### [x] C8 · El log del build traía advertencias permanentes
+
+**Detectado en la fase 5.** Dos avisos en cada build: Shiki advirtiendo
+de estilos inline incompatibles con CSP, y astro-icon de que `src/icons`
+no existe. Ninguno señalaba un fallo, y ese es el problema — un log que
+siempre trae advertencias entrena a ignorarlas.
+
+Resueltos con `markdown.syntaxHighlight: false` (no se renderiza ningún
+cuerpo markdown) y creando `src/icons/` con un README que explica su
+propósito. Build y `astro check`, ambos en cero advertencias.
+
+---
+
+## Resultado medido
+
+Chromium con Playwright. Mobile 390x844 salvo donde se indique.
+
+| Métrica                              | Antes       | Después       |
+| ------------------------------------ | ----------- | ------------- |
+| CLS (3G lento, mediana de 5)         | 0,0334      | **0,0000**    |
+| FCP (4G lento, mediana de 7)         | 656 ms      | **404 ms**    |
+| LCP (4G lento, mediana de 7)         | 936 ms      | **488 ms**    |
+| Subrecursos en ruta crítica          | 5           | **3**         |
+| Desviación del anchor a #habilidades | 239 px      | **0 px**      |
+| Layouts por 15 ciclos de hover       | 359         | **0**         |
+| Contraste del accent en tema claro   | 2,33:1 ❌   | **5,13:1** ✅ |
+| `unsafe-inline` en el CSP            | sí          | **no**        |
+| Vulnerabilidades de `npm audit`      | 3 (2 altas) | **0**         |
+| Advertencias en el build             | 2           | **0**         |
 
 ---
 
@@ -449,8 +481,9 @@ compara el `dist/index.html` generado antes y después.
 | 17  | C2 · magnetic rect             | —         | descartado, no reprod. |
 | 18  | C3 · iconos lucide             | `7ff9a11` | hecho                  |
 | 19  | C4 · inlineStylesheets         | `197176c` | hecho                  |
-| 20  | B5 · dependencias              |           | pendiente              |
-| 21  | B1 · CSP nativo                |           | pendiente              |
-| 22  | B2 · Fonts API                 |           | pendiente              |
-| 23  | F · llms.txt + lastmod         |           | pendiente              |
-| 24  | B3 · Astro 7                   |           | pendiente              |
+| 20  | B5 · dependencias              | `3d81d2e` | hecho                  |
+| 21  | B1 · CSP nativo                | `8bc0cf9` | hecho                  |
+| 22  | B2 · Fonts API                 | `d456266` | hecho                  |
+| 23  | F · llms.txt + lastmod         | `739d3b5` | hecho                  |
+| 24  | B3 · Astro 7                   | `a721ec9` | hecho                  |
+| 24b | C8 · build sin advertencias    | `e9f6d93` | hecho                  |
