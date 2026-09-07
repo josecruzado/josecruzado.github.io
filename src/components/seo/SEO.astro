@@ -30,6 +30,12 @@ const canonicalUrl = canonical
   : new URL(Astro.url.pathname, SITE.url).href;
 
 const imageUrl = new URL(image, SITE.url).href;
+
+// SITE.url no lleva barra final, pero el canonical se deriva de
+// Astro.url.pathname y sí la incluye ('https://…/'). Emitir ambas
+// formas hacía que Google viera dos strings para el mismo recurso.
+// new URL('/', …) normaliza a la misma representación que el canonical.
+const homeUrl = new URL('/', SITE.url).href;
 ---
 
 {/* Charset y viewport */}
@@ -77,8 +83,8 @@ const imageUrl = new URL(image, SITE.url).href;
   /* hreflang — el sitio está en español. Si en futuro se añade /en,
      añadir el hreflang="en" aquí. x-default cubre fallback. */
 }
-<link rel="alternate" hreflang="es" href={SITE.url} />
-<link rel="alternate" hreflang="x-default" href={SITE.url} />
+<link rel="alternate" hreflang="es" href={homeUrl} />
+<link rel="alternate" hreflang="x-default" href={homeUrl} />
 
 {
   /* Theme color:
