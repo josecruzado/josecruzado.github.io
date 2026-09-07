@@ -41,7 +41,14 @@
   --color-bg-elevated: light-dark(#ffffff, #0b0b0f);
   --color-fg: light-dark(#0a0a0a, #f5f5f7);
   --color-fg-muted: light-dark(#525252, #a1a1aa);
-  --color-fg-subtle: light-dark(#737373, #71717a);
+  /* #71717a (valor anterior en dark) daba 4,21:1 sobre #050507, por
+     debajo del 4,5:1 de WCAG AA. Pinta copy real — .project__description
+     entre otros — así que sube a #82828c → 5,35:1 sobre el fondo y
+     5,75:1 sobre bg-elevated. En light (#737373 → 4,54:1) ya cumplía. */
+  --color-fg-subtle: light-dark(#737373, #82828c);
+  /* SOLO para separadores y glifos decorativos (·, /). Queda por debajo
+     de AA a propósito (2,42:1 light / 2,63:1 dark): no debe usarse nunca
+     para texto que el usuario tenga que leer. */
   --color-fg-faint: light-dark(#a3a3a3, #52525b);
   --color-border: light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.08));
   --color-border-strong: light-dark(rgba(0, 0, 0, 0.14), rgba(255, 255, 255, 0.14));
