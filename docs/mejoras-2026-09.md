@@ -157,14 +157,14 @@ idéntico (37 metas, 15 links, 7 scripts antes y después).
 
 Deuda verificada por búsqueda exhaustiva en `src/`.
 
-### [ ] A4 · `tsconfig.json` configura JSX de React sin React
+### [x] A4 · `tsconfig.json` configura JSX de React sin React
 
 `"jsx": "react-jsx"` y `"jsxImportSource": "react"` sin React en
 `package.json` ni un solo `.tsx` en el repositorio. Hoy es inofensivo; el día
 que alguien añada un `.tsx` obtiene un error de resolución confuso. Astro trae
 su propio JSX.
 
-### [ ] D · Código muerto
+### [x] D · Código muerto
 
 **`src/lib/site.ts`** — claves sin ningún consumidor:
 `author.headline`, `author.tagline`, `author.bioShort`, `author.degree`,
@@ -183,7 +183,7 @@ muerto.
 **`src/components/seo/SEO.astro`** — `<meta name="title">` no es estándar y
 Google lo ignora; `<title>` ya cubre el caso.
 
-### [ ] E1 · Métricas de «Sobre mí» duplicadas
+### [x] E1 · Métricas de «Sobre mí» duplicadas
 
 `About.astro:30,36` escribe `6+` y `4` a mano mientras `Hero.astro:34` los lee
 de `SITE.stats`. Mismos números, dos fuentes de verdad. Contradice el principio
@@ -192,7 +192,7 @@ declarado en el README («`site.ts` concentra datos personales»).
 **Solución.** Derivar los valores de `SITE.stats`, conservando las notas
 descriptivas propias de la sección.
 
-### [ ] E2 · Sincronización de `theme-color` triplicada
+### [x] E2 · Sincronización de `theme-color` triplicada
 
 `BaseLayout.astro:75-76` y `FloatingNav.astro:62-66` implementan la misma
 lógica con los literales `#ffffff`/`#000000`, que además duplican
@@ -201,33 +201,42 @@ lógica con los literales `#ffffff`/`#000000`, que además duplican
 **Solución.** Inyectar los valores desde `site.ts` al script inline mediante
 `define:vars`, y exponerlos al módulo de `FloatingNav` vía atributo de datos.
 
-### [ ] E4 · No existe `<footer>`
+### [x] E4 · No existe `<footer>`
 
 La página termina en el `</section>` de Contacto. Un `<footer>` con copyright
 es un landmark esperado por lectores de pantalla y señal estándar de documento
 completo para crawlers.
 
-### [ ] E5 · `404.astro` no replica el contrato del skip-link
+### [x] E5 · `404.astro` no replica el contrato del skip-link
 
 `PageLayout.astro:26` documenta por qué `<main tabindex="-1">` es necesario
 (WCAG 2.4.1). `404.astro:9` usa `<main id="main">` sin `tabindex`: el
 skip-link hace scroll pero no mueve el foco — exactamente el bug que el
 comentario describe.
 
-### [ ] B6 · Cast obsoleto de `startViewTransition`
+### [x] B6 · Cast obsoleto de `startViewTransition`
 
 `FloatingNav.astro:88-90` castea `document` para acceder a
 `startViewTransition`. Verificado en `typescript/lib/lib.dom.d.ts:13182`: el
 método está tipado nativamente en TypeScript 6. El cast se colapsa a una
 llamada directa.
 
-### [ ] E6 · `smooth-scroll.ts` hace `pushState` sin manejar `popstate`
+### [~] E6 · `popstate` — **descartado, no reproduce**
 
-`smooth-scroll.ts:80` empuja el hash al historial pero no hay listener de
-`popstate`. El botón «atrás» cambia la URL sin devolver el scroll a la sección
-anterior.
+Se implementó un handler de `popstate` y se comparó contra el estado previo en
+Chromium con Playwright. **El comportamiento es idéntico con y sin él**: el
+navegador ya asocia una posición de scroll a cada entrada del historial y la
+restaura al recorrerla, incluidas las creadas con `pushState`.
 
-### [ ] E7 · `Section.astro` conoce los ids de las secciones
+    atrás            3285px  #proyectos   (== posición del click)
+    atrás x2          600px  (sin hash)   (== scroll manual previo)
+    adelante         3285px  #proyectos
+
+Añadir el handler solo habría competido con la restauración nativa —que además
+es instantánea a propósito, como los usuarios esperan del botón atrás—. Se
+revirtió.
+
+### [x] E7 · `Section.astro` conoce los ids de las secciones
 
 `Section.astro:79-93` codifica `contain-intrinsic-size` por
 `data-nav-section='sobre-mi'|'experiencia'|…` dentro de un componente
@@ -240,7 +249,7 @@ scroll.
 
 ## Fase 3 — Rendimiento
 
-### [ ] C1 · Transiciones sobre propiedades de layout
+### [x] C1 · Transiciones sobre propiedades de layout
 
 Tres lugares animan propiedades que disparan layout en cada frame:
 
@@ -256,16 +265,22 @@ qué evitar `all`. `padding` no es compositable.
 **Solución.** `translate` en lugar de `padding`, y transiciones explícitas por
 propiedad. El patrón ya existe en `utilities.css:152-158`.
 
-### [ ] C2 · `magnetic.ts` fuerza reflow en cada `pointermove`
+### [~] C2 · `magnetic.ts` — **descartado, no reproduce**
 
-`magnetic.ts:36` llama `getBoundingClientRect()` dentro del handler de
-`pointermove`: cada movimiento del ratón fuerza una sincronización de layout.
-El rect no cambia mientras el cursor permanece sobre el botón.
+Medido con CDP `Performance.getMetrics`, 120 `pointermove` recorriendo
+`.btn--primary`:
 
-**Solución.** Cachear el rect en `pointerenter`, invalidarlo en `pointerleave`,
-y declarar los listeners `{ passive: true }` (no llaman `preventDefault`).
+    LayoutCount 0 · LayoutDuration 0,0ms · RecalcStyle 12,8ms
 
-### [ ] C3 · `lucide: ['*']` carga el set completo en build
+Cero reflows. `--mx`/`--my` solo alimentan la propiedad `translate`, que es de
+compositor, así que escribirlas no ensucia el layout y el
+`getBoundingClientRect()` siguiente no fuerza ninguna sincronización.
+
+Cachear el rect además **introduciría** un defecto: al hacer scroll con el
+cursor sobre el botón, el rect cacheado quedaría obsoleto y el desplazamiento
+magnético se calcularía mal. Leerlo en cada movimiento es la decisión correcta.
+
+### [x] C3 · `lucide: ['*']` carga el set completo en build
 
 `astro.config.mjs:16`. `simple-icons` está enumerado (21 iconos) pero lucide usa
 comodín: se parsean ~1.600 iconos para emitir 25. Enumerarlos convierte un
@@ -277,7 +292,7 @@ Iconos de lucide en uso (verificados por búsqueda):
 `graduation-cap`, `house`, `languages`, `mail`, `moon`, `network`, `package`,
 `send`, `server`, `shield-check`, `sun`, `terminal`, `truck`, `wrench`.
 
-### [ ] C4 · Evaluar `inlineStylesheets: 'always'`
+### [x] C4 · Evaluar `inlineStylesheets: 'always'`
 
 `build.inlineStylesheets: 'auto'` deja ambos CSS fuera del umbral → dos
 round-trips bloqueantes antes del primer paint. En un sitio de **una sola
@@ -288,6 +303,27 @@ Se mide antes y después. Se adopta solo si el resultado lo justifica.
 > **Descartado tras medir:** deduplicar los SVG inline vía `<symbol>`/`<use>`
 > recuperaría ~1 KB de 46,8 KB (56 de 62 iconos son únicos). No compensa la
 > pérdida de legibilidad del markup.
+
+### [x] C7 · El anchor scroll no llegaba al destino
+
+**Detectado durante E7.** Con `content-visibility: auto`, las secciones fuera
+de pantalla ocupan la altura _estimada_. `scrollIntoView` calcula el offset una
+sola vez al arrancar y, mientras la animación avanza, las secciones que
+atraviesa se renderizan a su altura real y el destino se desplaza.
+
+Medido en Chromium: clicar «Habilidades» dejaba la sección **239px** por debajo
+del borde en desktop y **440px** en mobile. Anterior a esta rama.
+
+Afinar las estimaciones **no** lo resuelve: se midieron las alturas reales (bio
+1033px, tabs 1172px, cards 1896px, list 1054px, timeline 1325px) y al aplicarlas
+el error solo cambió de signo (#proyectos −253px, #habilidades −514px). El
+problema no es la magnitud sino que la geometría cambia a mitad de animación.
+
+**Solución.** Corregir sobre `scrollend`, con la página ya quieta y las alturas
+reales, mediante un `scrollBy` instantáneo si la desviación supera 2px. Se
+cancela si el usuario toma el control (rueda, gesto táctil, teclas de scroll).
+
+Resultado: 0px / 0px / 0px en desktop y 0px / 0px / −2px en mobile.
 
 ---
 
@@ -390,31 +426,31 @@ compara el `dist/index.html` generado antes y después.
 
 ## Registro de ejecución
 
-| #   | Punto                          | Commit    | Estado    |
-| --- | ------------------------------ | --------- | --------- |
-| 0   | Plan de mejoras                | `ebb1563` | hecho     |
-| 1   | A1 · contraste accent          | `9e191f4` | hecho     |
-| 2   | A2 · fg-subtle dark            | `cfe8ad3` | hecho     |
-| 3   | A3 · Permissions-Policy        | `5d3f2fd` | hecho     |
-| 3b  | C6 · comentarios HTML servidos | `3a13640` | hecho     |
-| 4   | A5 · hreflang                  | `f34a0b4` | hecho     |
-| 5   | A6 · teléfono en JSON-LD       | `2ecdb9d` | hecho     |
-| 6   | E3 · validación de tema        | `67a6a86` | hecho     |
-| 7   | A4 · tsconfig JSX              |           | pendiente |
-| 8   | D · código muerto              |           | pendiente |
-| 9   | E1 · métricas About            |           | pendiente |
-| 10  | E2 · theme-color               |           | pendiente |
-| 11  | E4 · footer                    |           | pendiente |
-| 12  | E5 · foco en 404               |           | pendiente |
-| 13  | B6 · startViewTransition       |           | pendiente |
-| 14  | E6 · popstate                  |           | pendiente |
-| 15  | E7 · Section intrinsic size    |           | pendiente |
-| 16  | C1 · transiciones de layout    |           | pendiente |
-| 17  | C2 · magnetic rect             |           | pendiente |
-| 18  | C3 · iconos lucide             |           | pendiente |
-| 19  | C4 · inlineStylesheets         |           | pendiente |
-| 20  | B5 · dependencias              |           | pendiente |
-| 21  | B1 · CSP nativo                |           | pendiente |
-| 22  | B2 · Fonts API                 |           | pendiente |
-| 23  | F · llms.txt + lastmod         |           | pendiente |
-| 24  | B3 · Astro 7                   |           | pendiente |
+| #   | Punto                          | Commit    | Estado                 |
+| --- | ------------------------------ | --------- | ---------------------- |
+| 0   | Plan de mejoras                | `ebb1563` | hecho                  |
+| 1   | A1 · contraste accent          | `9e191f4` | hecho                  |
+| 2   | A2 · fg-subtle dark            | `cfe8ad3` | hecho                  |
+| 3   | A3 · Permissions-Policy        | `5d3f2fd` | hecho                  |
+| 3b  | C6 · comentarios HTML servidos | `3a13640` | hecho                  |
+| 4   | A5 · hreflang                  | `f34a0b4` | hecho                  |
+| 5   | A6 · teléfono en JSON-LD       | `2ecdb9d` | hecho                  |
+| 6   | E3 · validación de tema        | `67a6a86` | hecho                  |
+| 7   | A4 · tsconfig JSX              | `4b36e9b` | hecho                  |
+| 8   | D · código muerto              | `b45eb8a` | hecho                  |
+| 9   | E1 · métricas About            | `e6771c7` | hecho                  |
+| 10  | E2 · theme-color               | `ad33726` | hecho                  |
+| 11  | E4 · footer + E5 foco en 404   | `17ad5db` | hecho                  |
+| 13  | B6 · startViewTransition       | `b0c95cc` | hecho                  |
+| 14  | E6 · popstate                  | —         | descartado, no reprod. |
+| 15  | E7 · Section intrinsic size    | `53dca2b` | hecho                  |
+| 15b | C7 · destino del anchor scroll | `a00919c` | hecho                  |
+| 16  | C1 · transiciones de layout    | `b5e73b1` | hecho                  |
+| 17  | C2 · magnetic rect             | —         | descartado, no reprod. |
+| 18  | C3 · iconos lucide             | `7ff9a11` | hecho                  |
+| 19  | C4 · inlineStylesheets         | `197176c` | hecho                  |
+| 20  | B5 · dependencias              |           | pendiente              |
+| 21  | B1 · CSP nativo                |           | pendiente              |
+| 22  | B2 · Fonts API                 |           | pendiente              |
+| 23  | F · llms.txt + lastmod         |           | pendiente              |
+| 24  | B3 · Astro 7                   |           | pendiente              |
