@@ -12,30 +12,70 @@ export default defineConfig({
   prefetch: false,
   integrations: [
     icon({
+      // Ambos sets enumerados. simple-icons ya lo estaba; lucide usaba
+      // `['*']`, una asimetría sin motivo. El valor es tener el inventario
+      // explícito: qué iconos usa el sitio se lee aquí, y sobra uno en
+      // cuanto deja de aparecer en src/.
+      //
+      // Se midió y NO aporta nada más: el build tarda lo mismo (~2,2s con
+      // ambas formas) y emite exactamente los mismos 63 SVG. Un nombre
+      // inválido tampoco pasa desapercibido en ninguno de los dos casos —
+      // astro-icon aborta el build igual con `['*']`.
+      //
+      // Los nombres salen de los .astro y del frontmatter `icon` de
+      // src/content/projects/*.md: al añadir uno nuevo hay que declararlo
+      // aquí o el build falla indicando cuál falta.
       include: {
-        lucide: ['*'],
+        lucide: [
+          'arrow-down',
+          'arrow-left',
+          'arrow-right',
+          'arrow-up',
+          'arrow-up-right',
+          'briefcase',
+          'chart-no-axes-combined',
+          'cloud',
+          'code-2',
+          'copy',
+          'database',
+          'download',
+          'graduation-cap',
+          'house',
+          'languages',
+          'mail',
+          'moon',
+          'network',
+          'package',
+          'send',
+          'server',
+          'shield-check',
+          'sun',
+          'terminal',
+          'truck',
+          'wrench',
+        ],
         'simple-icons': [
-          'openjdk',
-          'spring',
-          'springboot',
-          'quarkus',
+          'amazonwebservices',
+          'angular',
           'apachekafka',
           'docker',
-          'kubernetes',
-          'amazonwebservices',
-          'microsoftazure',
-          'mongodb',
-          'oracle',
-          'mysql',
           'git',
           'github',
-          'linkedin',
           'jenkins',
-          'terraform',
-          'openapiinitiative',
-          'sonarqube',
-          'angular',
+          'kubernetes',
+          'linkedin',
+          'microsoftazure',
+          'mongodb',
+          'mysql',
           'nodedotjs',
+          'openapiinitiative',
+          'openjdk',
+          'oracle',
+          'quarkus',
+          'sonarqube',
+          'spring',
+          'springboot',
+          'terraform',
         ],
       },
     }),
