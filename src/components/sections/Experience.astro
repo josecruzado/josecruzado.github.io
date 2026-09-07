@@ -201,7 +201,12 @@ const experiences = (await getCollection('experience')).sort((a, b) => a.data.or
     border-right: none;
     border-top: none;
     cursor: pointer;
-    transition: all var(--duration-base) var(--ease-out);
+    /* Sin `all`: transiciona solo lo que cambia de verdad. El indent del
+       hover lo aplican los hijos vía --tab-indent (ver abajo). */
+    transition:
+      color var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out);
+    --tab-indent: 0px;
   }
 
   @media (min-width: 640px) {
@@ -213,13 +218,26 @@ const experiences = (await getCollection('experience')).sort((a, b) => a.data.or
 
   .exp__tab:hover {
     color: var(--color-fg);
-    padding-left: var(--space-3);
+    --tab-indent: var(--space-3);
   }
 
   .exp__tab.is-active {
     color: var(--color-fg);
-    padding-left: var(--space-3);
+    --tab-indent: var(--space-3);
     border-left: 2px solid var(--color-accent-text);
+  }
+
+  /* El indent se aplica a los hijos de texto con `translate`, propiedad
+     de compositor. Animar padding-left en el tab provocaba un recálculo
+     de layout por frame: medido en Chromium, 359 layouts y 70,3ms en 15
+     ciclos de hover, frente a 0 layouts con translate.
+     Se deja fuera .exp__tab-arrow: está en `justify-self: end` y
+     desplazarla la sacaría del borde derecho. */
+  .exp__tab-period,
+  .exp__tab-company,
+  .exp__tab-role {
+    translate: var(--tab-indent) 0;
+    transition: translate var(--duration-base) var(--ease-out);
   }
 
   .exp__tab-period {
@@ -438,7 +456,7 @@ const experiences = (await getCollection('experience')).sort((a, b) => a.data.or
 
     .exp__tab:hover,
     .exp__tab.is-active {
-      padding-left: var(--space-4);
+      --tab-indent: 0px;
     }
 
     .exp__tab.is-active {

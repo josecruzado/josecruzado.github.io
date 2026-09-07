@@ -194,7 +194,9 @@ const featuredTech = featuredProject
     background: var(--color-bg-elevated);
     border: 1px solid var(--color-border);
     margin-bottom: var(--space-2);
-    transition: all var(--duration-base) var(--ease-out);
+    /* Sin transition: el icono no tiene ningún estado que cambie tras el
+       render inicial. `transition: all` solo obligaba al motor a vigilar
+       todas las propiedades animables sin que ninguna se moviera nunca. */
   }
 
   .project .project__icon {
