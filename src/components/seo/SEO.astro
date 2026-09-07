@@ -96,7 +96,13 @@ const homeUrl = new URL('/', SITE.url).href;
 }
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content={SITE.seo.themeColorDark} />
 <meta name="theme-color" media="(prefers-color-scheme: light)" content={SITE.seo.themeColorLight} />
-<meta name="theme-color" data-dynamic-theme content={SITE.seo.themeColorDark} />
+<meta
+  name="theme-color"
+  data-dynamic-theme
+  data-theme-color-light={SITE.seo.themeColorLight}
+  data-theme-color-dark={SITE.seo.themeColorDark}
+  content={SITE.seo.themeColorDark}
+/>
 <meta name="color-scheme" content="dark light" />
 
 {

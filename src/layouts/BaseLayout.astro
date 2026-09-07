@@ -83,7 +83,11 @@ const {
           const theme = saved === 'light' || saved === 'dark' ? saved : prefers;
           html.dataset.theme = theme;
           const meta = document.querySelector('meta[data-dynamic-theme]');
-          if (meta) meta.setAttribute('content', theme === 'light' ? '#ffffff' : '#000000');
+          // Los hex viven en site.ts y llegan como data-* en la propia
+          // meta: aquí no se repite ningún color.
+          const color =
+            meta && meta.dataset[theme === 'light' ? 'themeColorLight' : 'themeColorDark'];
+          if (color) meta.setAttribute('content', color);
         } catch (_) {
           /* SSR/no-storage: usa el default del HTML */
         }

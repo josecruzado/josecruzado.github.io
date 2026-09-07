@@ -62,7 +62,11 @@ const navItems = SITE.nav;
   function syncThemeColor() {
     if (!dynamicMeta) return;
     const isLight = root.dataset.theme === 'light';
-    dynamicMeta.setAttribute('content', isLight ? '#ffffff' : '#000000');
+    // Los valores los publica SEO.astro desde SITE.seo como data-*.
+    const color = isLight
+      ? dynamicMeta.dataset.themeColorLight
+      : dynamicMeta.dataset.themeColorDark;
+    if (color) dynamicMeta.setAttribute('content', color);
   }
 
   syncToggle();
