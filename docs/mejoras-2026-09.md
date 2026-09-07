@@ -49,7 +49,7 @@ Estas cifras se vuelven a medir al cerrar la fase 3 para cuantificar el efecto.
 
 Bugs reales, visibles en producción hoy. Máxima prioridad.
 
-### [ ] A1 · Contraste del accent como color de texto (WCAG AA)
+### [x] A1 · Contraste del accent como color de texto (WCAG AA)
 
 **Problema.** `--color-accent: #06b6d4` (`src/styles/tokens.css:14`) es estable
 entre temas por diseño, pero se usa como color de **texto** en 22 lugares
@@ -76,7 +76,7 @@ borde, ni un glow, ni el fondo del botón primario.
 nada. Se sustituye `color: var(--color-accent)` por `--color-accent-text` solo
 donde el token pinta texto, nunca donde pinta bordes o sombras.
 
-### [ ] A2 · `--color-fg-subtle` falla en tema oscuro
+### [x] A2 · `--color-fg-subtle` falla en tema oscuro
 
 `#71717a` sobre `#050507` = **4,21:1**, por debajo del 4,5:1 de AA. Se usa en
 16 sitios, entre ellos `.project__description`
@@ -87,7 +87,7 @@ Subir a `#82828c` → 5,35:1 sin alterar la jerarquía visual percibida.
 Se documenta además en `tokens.css` que `--color-fg-faint` (2,63:1 dark /
 2,42:1 light) queda restringido a separadores y nunca a texto legible.
 
-### [ ] A3 · `<meta http-equiv="Permissions-Policy">` es inerte
+### [x] A3 · `<meta http-equiv="Permissions-Policy">` es inerte
 
 `src/components/seo/SEO.astro:63-66`. La especificación de Permissions Policy
 obliga al cliente a **ignorar** cualquier política declarada vía `<meta>`: debe
@@ -101,7 +101,7 @@ mecanismo que ya no existe.
 que no hay sustituto viable; se deja anotado para una futura migración a un
 host con headers configurables.
 
-### [ ] A5 · `canonical` y `hreflang` divergen
+### [x] A5 · `canonical` y `hreflang` divergen
 
 Verificado en el `dist/index.html` generado:
 
@@ -118,7 +118,7 @@ Google ve dos strings para el mismo recurso.
 
 **Solución.** Normalizar con `new URL('/', SITE.url).href`.
 
-### [ ] A6 · Teléfono personal expuesto en JSON-LD
+### [x] A6 · Teléfono personal expuesto en JSON-LD
 
 `src/components/seo/JsonLd.astro:95` emite `telephone` en HTML público. Los
 scrapers de datos estructurados son el vector principal de spam telefónico. El
@@ -127,7 +127,7 @@ señal al Knowledge Graph que `email` + `sameAs` no cubran.
 
 **Solución.** Retirarlo del `@graph`; permanece en el CV en PDF.
 
-### [ ] E3 · El bootstrap de tema no valida `localStorage`
+### [x] E3 · El bootstrap de tema no valida `localStorage`
 
 `src/layouts/BaseLayout.astro:69-74` asigna `saved || prefers` directamente a
 `html.dataset.theme`. Un valor corrupto deja el atributo sin coincidir con
@@ -135,6 +135,21 @@ ningún selector de `tokens.css:122-126` → sin `color-scheme` → `light-dark(
 resuelve a light sobre un documento que declara otro tema.
 
 **Solución.** Aceptar únicamente `'light'` y `'dark'`.
+
+### [x] C6 · Los comentarios de desarrollo viajaban al cliente
+
+**Detectado durante la fase 1.** Astro emite los comentarios `<!-- -->`
+del template al HTML final; solo descarta los de sintaxis JSX. Las 18
+anotaciones de `SEO.astro`, `BaseLayout.astro` y `PageLayout.astro`
+—varias de ellas párrafos completos justificando decisiones técnicas—
+sumaban **3.502 B servidos en cada carga**, y por vivir en `<head>` se
+parseaban antes del enlace al CSS.
+
+**Solución.** Convertir a `{/* ... */}`. El comentario permanece en el
+código fuente, que es donde cumple su función.
+
+Resultado medido: `dist/index.html` 114,0 KB → 110,3 KB. Árbol emitido
+idéntico (37 metas, 15 links, 7 scripts antes y después).
 
 ---
 
@@ -375,30 +390,31 @@ compara el `dist/index.html` generado antes y después.
 
 ## Registro de ejecución
 
-| #   | Punto                       | Commit | Estado    |
-| --- | --------------------------- | ------ | --------- |
-| 0   | Plan de mejoras             |        | pendiente |
-| 1   | A1 · contraste accent       |        | pendiente |
-| 2   | A2 · fg-subtle dark         |        | pendiente |
-| 3   | A3 · Permissions-Policy     |        | pendiente |
-| 4   | A5 · hreflang               |        | pendiente |
-| 5   | A6 · teléfono en JSON-LD    |        | pendiente |
-| 6   | E3 · validación de tema     |        | pendiente |
-| 7   | A4 · tsconfig JSX           |        | pendiente |
-| 8   | D · código muerto           |        | pendiente |
-| 9   | E1 · métricas About         |        | pendiente |
-| 10  | E2 · theme-color            |        | pendiente |
-| 11  | E4 · footer                 |        | pendiente |
-| 12  | E5 · foco en 404            |        | pendiente |
-| 13  | B6 · startViewTransition    |        | pendiente |
-| 14  | E6 · popstate               |        | pendiente |
-| 15  | E7 · Section intrinsic size |        | pendiente |
-| 16  | C1 · transiciones de layout |        | pendiente |
-| 17  | C2 · magnetic rect          |        | pendiente |
-| 18  | C3 · iconos lucide          |        | pendiente |
-| 19  | C4 · inlineStylesheets      |        | pendiente |
-| 20  | B5 · dependencias           |        | pendiente |
-| 21  | B1 · CSP nativo             |        | pendiente |
-| 22  | B2 · Fonts API              |        | pendiente |
-| 23  | F · llms.txt + lastmod      |        | pendiente |
-| 24  | B3 · Astro 7                |        | pendiente |
+| #   | Punto                          | Commit    | Estado    |
+| --- | ------------------------------ | --------- | --------- |
+| 0   | Plan de mejoras                | `ebb1563` | hecho     |
+| 1   | A1 · contraste accent          | `9e191f4` | hecho     |
+| 2   | A2 · fg-subtle dark            | `cfe8ad3` | hecho     |
+| 3   | A3 · Permissions-Policy        | `5d3f2fd` | hecho     |
+| 3b  | C6 · comentarios HTML servidos | `3a13640` | hecho     |
+| 4   | A5 · hreflang                  | `f34a0b4` | hecho     |
+| 5   | A6 · teléfono en JSON-LD       | `2ecdb9d` | hecho     |
+| 6   | E3 · validación de tema        | `67a6a86` | hecho     |
+| 7   | A4 · tsconfig JSX              |           | pendiente |
+| 8   | D · código muerto              |           | pendiente |
+| 9   | E1 · métricas About            |           | pendiente |
+| 10  | E2 · theme-color               |           | pendiente |
+| 11  | E4 · footer                    |           | pendiente |
+| 12  | E5 · foco en 404               |           | pendiente |
+| 13  | B6 · startViewTransition       |           | pendiente |
+| 14  | E6 · popstate                  |           | pendiente |
+| 15  | E7 · Section intrinsic size    |           | pendiente |
+| 16  | C1 · transiciones de layout    |           | pendiente |
+| 17  | C2 · magnetic rect             |           | pendiente |
+| 18  | C3 · iconos lucide             |           | pendiente |
+| 19  | C4 · inlineStylesheets         |           | pendiente |
+| 20  | B5 · dependencias              |           | pendiente |
+| 21  | B1 · CSP nativo                |           | pendiente |
+| 22  | B2 · Fonts API                 |           | pendiente |
+| 23  | F · llms.txt + lastmod         |           | pendiente |
+| 24  | B3 · Astro 7                   |           | pendiente |
