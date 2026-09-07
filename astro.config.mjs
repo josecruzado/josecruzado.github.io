@@ -10,6 +10,38 @@ export default defineConfig({
   // solo aplica a anchors entre páginas, así que aquí no aporta. El CV
   // se preload manualmente vía <link rel="prefetch"> en SEO.astro.
   prefetch: false,
+  // CSP nativo (security.csp, estable desde Astro 6.0). Astro calcula el
+  // hash SHA-256 de cada script y estilo inline durante el build y emite
+  // él mismo el <meta http-equiv="content-security-policy">, así que
+  // `unsafe-inline` desaparece de script-src y style-src: hasta ahora el
+  // CSP declarado a mano en SEO.astro lo incluía en ambas y eso lo dejaba
+  // sin capacidad real de mitigar XSS.
+  //
+  // Las directivas de abajo son las que Astro NO deduce solo; script-src
+  // y style-src las genera él con los hashes. No se declara `unsafe-inline`
+  // en ninguna: los navegadores lo ignoran en cuanto la directiva lleva un
+  // hash, de modo que mezclarlos habría anulado el endurecimiento.
+  //
+  // No aplica en `astro dev` (limitación del dev server de Vite): se
+  // verifica con `npm run build && npm run preview`.
+  security: {
+    csp: {
+      algorithm: 'SHA-256',
+      directives: [
+        "default-src 'self'",
+        "img-src 'self' data:",
+        "font-src 'self'",
+        "connect-src 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        // Sin `frame-ancestors`: como Permissions-Policy, la spec obliga
+        // al navegador a ignorarla cuando llega en un <meta>. Chromium lo
+        // avisa en consola. Solo sirve como header HTTP, fuera del alcance
+        // de GitHub Pages.
+      ],
+    },
+  },
   integrations: [
     icon({
       // Ambos sets enumerados. simple-icons ya lo estaba; lucide usaba

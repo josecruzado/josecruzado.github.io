@@ -55,11 +55,14 @@ const homeUrl = new URL('/', SITE.url).href;
 <meta name="googlebot" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
 
 {
-  /* Hardening — CSP + Referrer.
-     GitHub Pages no permite HTTP headers custom, así que el CSP va vía
-     http-equiv, mecanismo que la spec sí contempla para esta cabecera.
-     `'unsafe-inline'` es necesario para el JSON-LD y el is:inline script
-     del theme bootstrap; Astro estático no emite nonces.
+  /* Hardening — Referrer.
+
+     El Content-Security-Policy YA NO se declara aquí: lo genera Astro
+     (security.csp en astro.config.mjs), que calcula el hash SHA-256 de
+     cada script y estilo inline durante el build. El CSP manual que
+     ocupaba este sitio llevaba 'unsafe-inline' en script-src y style-src
+     porque no había alternativa en su momento, y eso lo dejaba sin
+     capacidad real de mitigar XSS.
 
      NO hay Permissions-Policy: la spec obliga al cliente a IGNORAR toda
      política declarada vía <meta http-equiv> (debe estar activa antes de
@@ -69,10 +72,6 @@ const homeUrl = new URL('/', SITE.url).href;
      Netlify), se declara ahí — y con `browsing-topics=()`, no con el
      `interest-cohort=()` que apuntaba a FLoC, cancelado en 2022. */
 }
-<meta
-  http-equiv="Content-Security-Policy"
-  content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
-/>
 <meta name="referrer" content="strict-origin-when-cross-origin" />
 
 {/* Canonical */}
