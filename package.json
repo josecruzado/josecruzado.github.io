@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "verify": "node scripts/verify-build.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "check": "astro check",
@@ -26,5 +27,9 @@
     "prettier": "^3.8.3",
     "prettier-plugin-astro": "^0.14.1",
     "typescript": "^6.0.3"
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "fsevents": true
   }
 }
