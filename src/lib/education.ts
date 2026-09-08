@@ -16,7 +16,7 @@ export const EDUCATION: EducationItem[] = [
   {
     period: '2017 — 2021',
     datetime: '2017/2021',
-    title: 'Bachiller en Ingeniería de Sistemas Computacionales',
+    title: 'Ingeniero de Sistemas Computacionales',
     institution: 'Universidad Privada del Norte',
     type: 'degree',
     icon: 'lucide:graduation-cap',

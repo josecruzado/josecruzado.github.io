@@ -91,7 +91,11 @@ export const GET: APIRoute = async () => {
           {
             institution: degree.institution,
             area: degree.title,
-            studyType: 'Bachelor',
+            // "Engineer's Degree" y no "Bachelor": el título profesional de
+            // ingeniero es un grado distinto y posterior al de bachiller en
+            // el sistema peruano, y es el valor que reconocen LinkedIn y las
+            // herramientas del ecosistema JSON Resume.
+            studyType: "Engineer's Degree",
             ...(splitPeriod(degree.datetime).start
               ? { startDate: splitPeriod(degree.datetime).start }
               : {}),
