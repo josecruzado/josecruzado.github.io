@@ -15,7 +15,7 @@
  * con selectores por `data-nav-section`, de modo que renombrar una
  * sección descalibraba el anchor scroll en silencio.
  */
-type ContentShape = 'bio' | 'tabs' | 'cards' | 'list' | 'timeline';
+type ContentShape = 'bio' | 'tabs' | 'cards' | 'list' | 'timeline' | 'split';
 
 interface Props {
   id: string;
@@ -105,6 +105,11 @@ const sectionClass = [
   .section--lazy[data-shape='list'],
   .section--lazy[data-shape='timeline'] {
     contain-intrinsic-size: auto 700px;
+  }
+  /* `split`: dos paneles con scroll interno acotado, así que su altura
+     apenas varía con el contenido. Medida: 1139px desktop, 1311px mobile. */
+  .section--lazy[data-shape='split'] {
+    contain-intrinsic-size: auto 1140px;
   }
 
   /* En mobile las secciones colapsan a una columna y crecen en vertical.

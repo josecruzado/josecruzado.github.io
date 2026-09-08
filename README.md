@@ -13,7 +13,8 @@ Producción: https://josecruzado.github.io
 - Fonts API nativa de Astro (`fonts` en la config + `<Font />`).
 - CSP nativo con hashes SHA-256, sin `unsafe-inline`.
 - `astro-icon` con Lucide y Simple Icons, ambos sets enumerados.
-- SEO con Open Graph, Twitter Cards, JSON-LD, sitemap, robots, manifest y `llms.txt`.
+- SEO con Open Graph, Twitter Cards, JSON-LD, sitemap, robots, manifest,
+  `llms.txt` y `cv.json`.
 - Deploy a GitHub Pages mediante GitHub Actions.
 
 > **TypeScript sigue en 6 a propósito.** TS 7 (compilador nativo en Go)
@@ -30,14 +31,17 @@ src/
 │   ├── ui/          Button, Card, Section, Badge, Icon
 │   ├── seo/         SEO y JSON-LD
 │   ├── nav/         FloatingNav
-│   └── sections/    Hero, About, Experience, Projects, Skills, Education, Contact
+│   └── sections/    Hero, About, Experience, Projects, ApiContract,
+│                     Skills, Education, Contact
 ├── content/
 │   ├── experience/  Experiencia profesional validada con Zod
 │   └── projects/    Proyectos/casos destacados
 ├── icons/           SVG propios para astro-icon (hoy vacío, ver su README)
 ├── layouts/         BaseLayout y PageLayout
-├── lib/             site.ts, skills.ts, education.ts
-├── pages/           index.astro, 404.astro y llms.txt.ts
+├── lib/             site.ts, skills.ts, education.ts, build-info.ts,
+│                   api-contract.ts, yaml.ts
+├── pages/           index.astro, 404.astro, llms.txt.ts, cv.json.ts,
+│                   openapi.json.ts
 ├── scripts/         smooth-scroll.ts y magnetic.ts
 └── styles/          tokens, reset, utilities y global
 ```
@@ -49,8 +53,8 @@ src/
   leen con `statValue(id)`, que convierte un id inexistente en error de
   compilación.
 - Los proyectos y experiencias viven en Content Collections tipadas.
-- `/llms.txt` se genera desde esas mismas fuentes, no a mano, para que no
-  pueda desincronizarse del contenido del sitio.
+- `/llms.txt` y `/cv.json` se generan desde esas mismas fuentes, no a mano,
+  para que no puedan desincronizarse del contenido del sitio.
 - El acento tiene dos tokens: `--color-accent` para superficies
   decorativas y `--color-accent-text` para texto, iconos e indicadores de
   estado. El segundo se oscurece en tema claro para cumplir WCAG AA.
@@ -129,6 +133,20 @@ Incluye:
 - Sitemap con `lastmod` tomado del último commit, y robots.txt.
 - `/llms.txt` para crawlers de IA, generado desde `site.ts`, `skills.ts`,
   `education.ts` y las content collections.
+- `/openapi.json` con el contrato que describe `/cv.json` y `/llms.txt`. Es
+  lo mismo que renderiza la sección «Contrato» de la web: ambos leen de
+  `src/lib/api-contract.ts`, así que la documentación no puede divergir de
+  lo que se sirve. El YAML se serializa y resalta en build
+  (`src/lib/yaml.ts`) para no depender de Shiki, incompatible con el CSP.
+  La sección permite ejecutar cada endpoint —mismo origen, así que el CSP
+  lo admite sin ampliar `connect-src`— y muestra estado, cabeceras y el
+  cuerpo real truncado a 40 líneas, para que el coste sea constante
+  independientemente del tamaño de la respuesta.
+- `/cv.json` con el CV en [JSON Resume](https://jsonresume.org), un esquema
+  publicado que herramientas de terceros y ATS saben leer. Se genera desde
+  las mismas fuentes y se anuncia con `rel="alternate"` en el `<head>`.
+  Validado contra el esquema oficial con `ajv`; `npm run verify` comprueba
+  en cada build que siga sincronizado con las content collections.
 
 Validadores útiles:
 

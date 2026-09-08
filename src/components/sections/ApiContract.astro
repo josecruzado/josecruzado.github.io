@@ -1,0 +1,1007 @@
+---
+/**
+ * Contrato — el sitio documentando su propia API.
+ *
+ * Panel izquierdo: el contrato OpenAPI serializado a YAML y tokenizado EN
+ * BUILD (ver lib/yaml.ts), así que el cliente no recibe resaltador alguno.
+ * Panel derecho: la lectura del contrato, como la daría una herramienta de
+ * documentación, con la posibilidad de ejecutar cada endpoint de verdad —
+ * son del mismo origen, así que el CSP los permite con connect-src 'self'.
+ *
+ * Ambos lados leen de lib/api-contract.ts, que es también lo que se sirve en
+ * /openapi.json. No hay simulación: lo que se lee es lo que responde.
+ */
+import Section from '../ui/Section.astro';
+import SectionHeader from '../ui/SectionHeader.astro';
+import Icon from '../ui/Icon.astro';
+import { API_CONTRACT } from '../../lib/api-contract';
+import { SITE } from '../../lib/site';
+import { highlightYaml, toYaml } from '../../lib/yaml';
+
+const yaml = toYaml(API_CONTRACT);
+const highlighted = highlightYaml(yaml);
+const lineCount = yaml.split('\n').length;
+
+/**
+ * Forma de una respuesta del contrato.
+ *
+ * `as const` en API_CONTRACT da los tipos literales que el resto del archivo
+ * aprovecha, pero Object.entries colapsa a `unknown` los valores heterogéneos
+ * de `responses`. Nombrar la forma deja la aserción acotada y legible en vez
+ * de un cast suelto en medio de la expresión.
+ */
+type ResponseDetail = { description: string; content: Record<string, unknown> };
+
+/** Aplana paths → operaciones para que el panel derecho las liste. */
+const operations = Object.entries(API_CONTRACT.paths).flatMap(([path, item]) =>
+  Object.entries(item).map(([method, operation]) => {
+    const [status, detail] = Object.entries(operation.responses)[0] as [string, ResponseDetail];
+    return {
+      path,
+      method: method.toUpperCase(),
+      summary: operation.summary,
+      description: operation.description,
+      // El comando se arma en build; en el cliente solo queda el copiado.
+      curl: `curl -s ${SITE.url}${path}`,
+      status,
+      statusText: detail.description,
+      mediaType: Object.keys(detail.content)[0],
+    };
+  })
+);
+
+const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.properties).map(
+  ([name, schema]) => ({
+    name,
+    type: 'type' in schema ? schema.type : 'object',
+    required: (API_CONTRACT.components.schemas.Resume.required as readonly string[]).includes(name),
+  })
+);
+---
+
+<Section id="contrato" ariaLabel="Contrato de la API" shape="split">
+  <SectionHeader eyebrow="04 · Contrato" size="md">
+    Defino contratos a diario. Este describe el mío.
+  </SectionHeader>
+
+  <div class="contract">
+    <div class="contract__pane contract__pane--spec">
+      <header class="contract__bar">
+        <span class="contract__file">
+          <Icon name="lucide:file-code-2" size={14} />
+          openapi.yaml
+        </span>
+        <span class="contract__meta">{lineCount} líneas · OpenAPI {API_CONTRACT.openapi}</span>
+        <button
+          type="button"
+          class="contract__collapse"
+          data-collapse
+          aria-expanded="true"
+          aria-controls="contract-spec"
+        >
+          <Icon
+            name="lucide:panel-left-close"
+            size={14}
+            class="collapse-icon collapse-icon--close"
+          />
+          <Icon name="lucide:panel-left-open" size={14} class="collapse-icon collapse-icon--open" />
+          <span class="sr-only">Contraer el contrato</span>
+        </button>
+      </header>
+      <div class="contract__scroll" id="contract-spec">
+        <pre
+          class="contract__code"
+          tabindex="0"
+          role="region"
+          aria-label="Contrato OpenAPI en YAML"><code set:html={highlighted} /></pre>
+      </div>
+    </div>
+
+    <div class="contract__pane contract__pane--preview">
+      <header class="contract__bar">
+        <span class="contract__file">
+          <Icon name="lucide:book-open" size={14} />
+          Vista del contrato
+        </span>
+        <span class="contract__version">v{API_CONTRACT.info.version}</span>
+      </header>
+
+      <div class="contract__scroll">
+        <div class="contract__doc">
+          <h3 class="contract__title">{API_CONTRACT.info.title}</h3>
+          <p class="contract__summary">{API_CONTRACT.info.description}</p>
+          <p class="contract__server">
+            <span>Servidor</span>
+            <code>{API_CONTRACT.servers[0].url}</code>
+          </p>
+
+          <ul class="contract__ops" role="list">
+            {
+              operations.map((op) => (
+                <li>
+                  <details class="op" open>
+                    <summary class="op__head">
+                      <span class="op__method">{op.method}</span>
+                      <code class="op__path">{op.path}</code>
+                      <span class="op__head-summary">{op.summary}</span>
+                      <Icon name="lucide:chevron-down" size={14} class="op__chevron" />
+                    </summary>
+                    <div class="op__body">
+                      <p class="op__desc">{op.description}</p>
+                      <div class="op__response">
+                        <span class="op__status">{op.status}</span>
+                        <span class="op__media">{op.mediaType}</span>
+                        <span class="op__status-text">{op.statusText}</span>
+                      </div>
+                      <div class="op__curl">
+                        <code>{op.curl}</code>
+                        <button
+                          type="button"
+                          class="op__copy"
+                          data-copy={op.curl}
+                          aria-label={`Copiar comando cURL de ${op.path}`}
+                        >
+                          <Icon name="lucide:copy" size={12} />
+                        </button>
+                      </div>
+
+                      <div class="op__run">
+                        <button type="button" class="op__button" data-run={op.path}>
+                          <Icon name="lucide:play" size={13} />
+                          Ejecutar
+                        </button>
+                        <output class="op__result" data-result={op.path} aria-live="polite" />
+                      </div>
+
+                      <div class="response" data-response={op.path} hidden>
+                        <div class="response__bar">
+                          <span class="response__status" data-response-status />
+                          <span class="response__headers" data-response-headers />
+                        </div>
+                        <pre class="response__body">
+                          <code data-response-body />
+                        </pre>
+                        <p class="response__more" data-response-more hidden>
+                          <a href={op.path} target="_blank" rel="noopener">
+                            Ver respuesta completa
+                            <Icon name="lucide:arrow-up-right" size={12} />
+                          </a>
+                        </p>
+                      </div>
+                    </div>
+                  </details>
+                </li>
+              ))
+            }
+          </ul>
+
+          <details class="contract__schema" open>
+            <summary class="contract__schema-title">
+              <Icon name="lucide:braces" size={13} />
+              Schema · Resume
+              <Icon name="lucide:chevron-down" size={13} class="op__chevron" />
+            </summary>
+            <ul class="fields" role="list">
+              {
+                schemaFields.map((field) => (
+                  <li class="field">
+                    <code class="field__name">{field.name}</code>
+                    <span class="field__type">{field.type}</span>
+                    {field.required && <span class="field__req">requerido</span>}
+                  </li>
+                ))
+              }
+            </ul>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+</Section>
+
+<script>
+  import { escapeHtml } from '../../lib/html';
+
+  // Todo lo de aquí ocurre BAJO DEMANDA: nada se ejecuta al cargar la página.
+  // La sección vive además tras `content-visibility: auto`, así que ni
+  // siquiera se pinta hasta acercarse al viewport.
+  const MAX_LINES = 40;
+
+  const formatBytes = (bytes: number) =>
+    bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+
+  /**
+   * Resaltado JSON mínimo. Se escapa PRIMERO y se tokeniza después, de modo
+   * que el contenido nunca se interpreta como markup aunque venga del propio
+   * origen. Reutiliza las mismas clases de token que el YAML del panel
+   * izquierdo, así que hereda el tema sin CSS adicional.
+   */
+  function highlightJson(source: string): string {
+    return escapeHtml(source).replace(
+      /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
+      (match, str, colon, bool, num) => {
+        if (str)
+          return `<span class="${colon ? 'tok-key' : 'tok-string'}">${str}</span>${colon ?? ''}`;
+        if (bool) return `<span class="tok-bool">${bool}</span>`;
+        if (num) return `<span class="tok-number">${num}</span>`;
+        return match;
+      }
+    );
+  }
+
+  // ---------------------------------------------------------------- Ejecutar
+  for (const button of document.querySelectorAll<HTMLButtonElement>('[data-run]')) {
+    button.addEventListener('click', async () => {
+      const path = button.dataset.run;
+      if (!path) return;
+
+      const result = document.querySelector<HTMLElement>(`[data-result="${path}"]`);
+      const panel = document.querySelector<HTMLElement>(`[data-response="${path}"]`);
+      if (!result || !panel) return;
+
+      const statusEl = panel.querySelector<HTMLElement>('[data-response-status]');
+      const headersEl = panel.querySelector<HTMLElement>('[data-response-headers]');
+      const bodyEl = panel.querySelector<HTMLElement>('[data-response-body]');
+      const moreEl = panel.querySelector<HTMLElement>('[data-response-more]');
+
+      button.disabled = true;
+      result.textContent = 'Ejecutando…';
+      result.dataset.state = 'pending';
+
+      const started = performance.now();
+      try {
+        const response = await fetch(path, { headers: { Accept: '*/*' } });
+        const body = await response.text();
+        const elapsed = Math.round(performance.now() - started);
+        const size = new Blob([body]).size;
+
+        result.dataset.state = response.ok ? 'ok' : 'error';
+        result.textContent = `${elapsed} ms · ${formatBytes(size)}`;
+
+        if (statusEl) {
+          statusEl.textContent = `${response.status} ${response.statusText || 'OK'}`;
+          statusEl.dataset.ok = String(response.ok);
+        }
+        if (headersEl) {
+          headersEl.textContent = `content-type: ${response.headers.get('content-type') ?? '—'}`;
+        }
+
+        if (bodyEl) {
+          // Se trunca a propósito: volcar 15 KB de JSON crearía miles de
+          // nodos y el coste dejaría de ser constante. El enlace de abajo
+          // lleva a la respuesta íntegra.
+          const bodyLines = body.split('\n');
+          const shown = bodyLines.slice(0, MAX_LINES).join('\n');
+          const isJson = (response.headers.get('content-type') ?? '').includes('json');
+          bodyEl.innerHTML = isJson ? highlightJson(shown) : escapeHtml(shown);
+          if (moreEl) moreEl.hidden = bodyLines.length <= MAX_LINES;
+        }
+
+        panel.hidden = false;
+      } catch {
+        result.dataset.state = 'error';
+        result.textContent = 'La petición falló';
+        panel.hidden = true;
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
+
+  // ------------------------------------------------------------ Copiar cURL
+  for (const button of document.querySelectorAll<HTMLButtonElement>('[data-copy]')) {
+    button.addEventListener('click', async () => {
+      const command = button.dataset.copy;
+      if (!command) return;
+      try {
+        await navigator.clipboard.writeText(command);
+        button.dataset.copied = 'true';
+        window.setTimeout(() => delete button.dataset.copied, 1600);
+      } catch {
+        /* Sin portapapeles el comando sigue visible y seleccionable. */
+      }
+    });
+  }
+
+  // ------------------------------------------------- Plegar el contrato
+  // Deja la vista a ancho completo cuando se quiere leer solo la
+  // documentación. El estado vive en un atributo del contenedor, así que
+  // todo el comportamiento visual es CSS; aquí solo se conmuta.
+  const contract = document.querySelector<HTMLElement>('.contract');
+  const collapseButton = document.querySelector<HTMLButtonElement>('[data-collapse]');
+  const collapseLabel = collapseButton?.querySelector('.sr-only');
+
+  collapseButton?.addEventListener('click', () => {
+    if (!contract) return;
+    const collapsed = contract.toggleAttribute('data-collapsed');
+    collapseButton.setAttribute('aria-expanded', String(!collapsed));
+    if (collapseLabel) {
+      collapseLabel.textContent = collapsed ? 'Expandir el contrato' : 'Contraer el contrato';
+    }
+  });
+
+  // -------------------------------------- Plegado de bloques del contrato
+  // Como en el editor de Swagger: cada clave con hijos se pliega. Los
+  // rangos se calculan en build (ver lib/yaml.ts); aquí solo se ocultan
+  // las líneas del bloque y se marca el estado.
+  //
+  // NO hay seguimiento automático entre paneles: el desplazamiento del
+  // contrato lo decide quien lee, no la vista.
+  const codeLines = Array.from(document.querySelectorAll<HTMLElement>('.contract__code .line'));
+
+  for (const toggle of document.querySelectorAll<HTMLButtonElement>('[data-fold]')) {
+    toggle.addEventListener('click', () => {
+      const line = toggle.closest<HTMLElement>('.line');
+      const from = Number(toggle.dataset.fold);
+      const to = Number(line?.dataset.foldEnd);
+      if (!line || Number.isNaN(from) || Number.isNaN(to)) return;
+
+      const folded = line.toggleAttribute('data-folded');
+      toggle.setAttribute('aria-expanded', String(!folded));
+      toggle.setAttribute('aria-label', folded ? 'Desplegar bloque' : 'Plegar bloque');
+
+      for (let i = from + 1; i <= to && i < codeLines.length; i += 1) {
+        const child = codeLines[i];
+        if (!child) continue;
+        if (folded) {
+          child.dataset.hiddenBy = String(from);
+          child.hidden = true;
+        } else if (child.dataset.hiddenBy === String(from)) {
+          // Solo se reabre lo que ESTE bloque ocultó: si dentro había otro
+          // plegado, sus líneas siguen ocultas por su propio marcador.
+          delete child.dataset.hiddenBy;
+          child.hidden = false;
+        }
+      }
+    });
+  }
+</script>
+
+<style>
+  /* Recuadro único: los dos paneles comparten borde exterior y se separan
+     con una divisoria interna, como un editor con vista partida. */
+  .contract {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--color-bg-elevated);
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 900px) {
+    .contract {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+  }
+
+  .contract__pane {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .contract__pane--spec {
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+
+  @media (min-width: 900px) {
+    .contract__pane--spec {
+      border-bottom: 0;
+      border-right: 1px solid var(--color-border);
+    }
+  }
+
+  .contract__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-fg-subtle);
+  }
+
+  .contract__file {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-fg-muted);
+  }
+
+  .contract__version {
+    padding: 0.15rem 0.5rem;
+    border: 1px solid var(--color-accent-ring);
+    border-radius: var(--radius-sm);
+    color: var(--color-accent-text);
+  }
+
+  /* Altura acotada e igual en ambos paneles: el contrato es largo y la
+     sección no debe crecer sin control. */
+  .contract__scroll {
+    overflow: auto;
+    /* 40rem deja ver ~55 líneas del contrato de un vistazo sin que la caja
+       desborde un viewport de 900px con el header de la sección encima. */
+    max-height: 40rem;
+    overscroll-behavior: contain;
+  }
+
+  /* Cada línea es un bloque para que el resaltado ocupe el ancho completo.
+     Se emiten sin \n entre ellas; los saltos los aporta `display: block`,
+     que además los conserva al copiar. */
+  .contract__code :global(.line) {
+    display: block;
+    padding-inline: var(--space-4);
+    margin-inline: calc(var(--space-4) * -1);
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+
+  /* Hueco a la izquierda para el control de plegado. */
+  .contract__code :global(.line) {
+    position: relative;
+    padding-left: calc(var(--space-4) + 0.9rem);
+  }
+
+  .contract__code :global(.line[hidden]) {
+    display: none;
+  }
+
+  /* El control solo aparece al pasar por el código o al recibir foco: en
+     reposo el contrato se lee limpio, sin una columna de flechas. */
+  .contract__code :global(.fold) {
+    position: absolute;
+    left: var(--space-4);
+    top: 0.15em;
+    width: 0.9rem;
+    height: 1.1em;
+    padding: 0;
+    /* fg-subtle y no fg-faint: es un control interactivo y SC 1.4.11 exige
+       3:1. fg-faint (2,42:1) queda por debajo — es el token que tokens.css
+       restringe a separadores decorativos. */
+    color: var(--color-fg-subtle);
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--ease-out);
+  }
+
+  .contract__code:hover :global(.fold),
+  .contract__code :global(.fold:focus-visible),
+  .contract__code :global(.line[data-folded] .fold) {
+    opacity: 1;
+  }
+
+  .contract__code :global(.fold)::before {
+    content: '▾';
+    display: block;
+    line-height: 1;
+    font-size: 0.75rem;
+  }
+
+  .contract__code :global(.line[data-folded] .fold)::before {
+    content: '▸';
+  }
+
+  .contract__code :global(.line[data-folded]) {
+    background: var(--color-surface-hover);
+  }
+
+  .contract__code :global(.line[data-folded])::after {
+    content: ' …';
+    /* Señala que hay contenido plegado, así que informa: no puede quedarse
+       en el token reservado a decoración. */
+    color: var(--color-fg-subtle);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .contract__code :global(.line),
+    .contract__code :global(.fold) {
+      transition: none;
+    }
+  }
+
+  .contract__code {
+    margin: 0;
+    padding: var(--space-4);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    line-height: 1.65;
+    tab-size: 2;
+    color: var(--color-fg-muted);
+  }
+
+  .contract__code:focus-visible {
+    outline: 2px solid var(--color-accent-text);
+    outline-offset: -2px;
+  }
+
+  /* Tokens del resaltado. Se apoyan en los tokens del sistema para que el
+     coloreado siga el tema sin una paleta paralela. */
+  .contract__code :global(.tok-key) {
+    color: var(--color-accent-text);
+  }
+  .contract__code :global(.tok-string) {
+    color: var(--color-fg);
+  }
+  .contract__code :global(.tok-number),
+  .contract__code :global(.tok-bool) {
+    color: var(--color-success);
+  }
+  .contract__code :global(.tok-punct) {
+    /* La puntuación se atenúa como en cualquier editor, pero sigue siendo
+       texto: fg-subtle la deja de-enfatizada y por encima del mínimo. */
+    color: var(--color-fg-subtle);
+  }
+
+  /* Plegado del contrato: al contraer, el panel izquierdo se reduce a su
+     barra y la vista pasa a ocupar todo el ancho. En mobile el layout ya es
+     de una columna, así que contraer simplemente oculta el YAML. */
+  .contract__collapse {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem;
+    margin-left: var(--space-1);
+    border-radius: var(--radius-sm);
+    color: var(--color-fg-subtle);
+    flex-shrink: 0;
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .contract__collapse:hover {
+    color: var(--color-accent-text);
+  }
+
+  .contract__collapse :global(.collapse-icon--open) {
+    display: none;
+  }
+
+  .contract[data-collapsed] .contract__collapse :global(.collapse-icon--close) {
+    display: none;
+  }
+
+  .contract[data-collapsed] .contract__collapse :global(.collapse-icon--open) {
+    display: block;
+  }
+
+  .contract[data-collapsed] .contract__pane--spec .contract__scroll {
+    display: none;
+  }
+
+  .contract[data-collapsed] .contract__pane--spec .contract__bar {
+    border-bottom: 0;
+  }
+
+  /* Plegado: el nombre y el contador desaparecen y queda solo el botón.
+     Se probó una franja con el texto en vertical y se descartó — obligaba
+     a girar tipografía por un dato que ya se conoce, y bastaba un selector
+     mal acotado para rotar también la cabecera de la vista. */
+  .contract[data-collapsed] .contract__pane--spec .contract__file,
+  .contract[data-collapsed] .contract__pane--spec .contract__meta {
+    display: none;
+  }
+
+  @media (min-width: 900px) {
+    .contract[data-collapsed] {
+      grid-template-columns: 2.75rem minmax(0, 1fr);
+    }
+
+    .contract[data-collapsed] .contract__pane--spec .contract__bar {
+      justify-content: center;
+      height: 100%;
+      align-items: flex-start;
+      padding: var(--space-3) 0;
+      border-bottom: 0;
+    }
+
+    .contract[data-collapsed] .contract__collapse {
+      margin-left: 0;
+    }
+  }
+
+  /* En mobile el layout ya es de una columna: contraer solo oculta el YAML
+     y la barra se queda como cabecera plegable a ancho completo. */
+  @media (max-width: 899px) {
+    .contract[data-collapsed] .contract__pane--spec .contract__bar {
+      justify-content: flex-start;
+      gap: var(--space-2);
+    }
+
+    .contract[data-collapsed] .contract__pane--spec .contract__bar::before {
+      content: 'openapi.yaml';
+      font-family: var(--font-mono);
+      color: var(--color-fg-muted);
+    }
+  }
+
+  .contract__doc {
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .contract__title {
+    font-family: var(--font-display);
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+  }
+
+  .contract__summary {
+    font-size: var(--text-sm);
+    color: var(--color-fg-subtle);
+    line-height: var(--leading-normal);
+  }
+
+  .contract__server {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-fg-subtle);
+  }
+
+  .contract__server code {
+    color: var(--color-fg-muted);
+  }
+
+  .contract__ops {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .op {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    background: var(--color-bg);
+  }
+
+  /* Operación plegable con <details> nativo: sin JavaScript, accesible por
+     teclado y con el estado gestionado por el navegador. */
+  .op__head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .op__head::-webkit-details-marker {
+    display: none;
+  }
+
+  .op__head:focus-visible {
+    outline: 2px solid var(--color-accent-text);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
+  }
+
+  .op__head-summary {
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .op[open] .op__head-summary {
+    display: none;
+  }
+
+  .op__chevron {
+    margin-left: auto;
+    color: var(--color-fg-subtle);
+    transition: transform var(--duration-fast) var(--ease-out);
+  }
+
+  .op[open] .op__chevron,
+  .contract__schema[open] .op__chevron {
+    transform: rotate(180deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .op__chevron {
+      transition: none;
+    }
+  }
+
+  .op__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+
+  .op__method {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: var(--weight-bold);
+    letter-spacing: 0.08em;
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm);
+    background: var(--color-accent-soft);
+    border: 1px solid var(--color-accent-ring);
+    color: var(--color-accent-text);
+  }
+
+  .op__path {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-fg);
+  }
+
+  .op__desc {
+    font-size: var(--text-xs);
+    color: var(--color-fg-subtle);
+    line-height: var(--leading-normal);
+  }
+
+  .op__response {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    padding-top: var(--space-2);
+    border-top: 1px dashed var(--color-border);
+  }
+
+  .op__status {
+    color: var(--color-success);
+    font-weight: var(--weight-semibold);
+  }
+
+  .op__media {
+    color: var(--color-fg-muted);
+  }
+
+  .op__status-text {
+    color: var(--color-fg-subtle);
+  }
+
+  /* Comando cURL: el snippet que toda herramienta de documentación ofrece.
+     La cadena viene del build; solo el copiado es JavaScript. */
+  .op__curl {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-fg-muted);
+    overflow-x: auto;
+  }
+
+  .op__curl code {
+    white-space: nowrap;
+  }
+
+  .op__copy {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem;
+    border-radius: var(--radius-sm);
+    color: var(--color-fg-subtle);
+    flex-shrink: 0;
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .op__copy:hover {
+    color: var(--color-accent-text);
+  }
+
+  .op__copy[data-copied] {
+    color: var(--color-success);
+  }
+
+  /* Panel de respuesta: aparece solo tras ejecutar. */
+  .response {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-top: var(--space-1);
+  }
+
+  .response__bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+  }
+
+  .response__status {
+    font-weight: var(--weight-semibold);
+    color: var(--color-accent-text);
+  }
+
+  .response__status[data-ok='true'] {
+    color: var(--color-success);
+  }
+
+  .response__headers {
+    color: var(--color-fg-subtle);
+    overflow-wrap: anywhere;
+  }
+
+  .response__body {
+    margin: 0;
+    padding: var(--space-3);
+    max-height: 16rem;
+    overflow: auto;
+    overscroll-behavior: contain;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    line-height: 1.6;
+    color: var(--color-fg-muted);
+    background: var(--color-bg);
+  }
+
+  .response__body :global(.tok-key) {
+    color: var(--color-accent-text);
+  }
+  .response__body :global(.tok-string) {
+    color: var(--color-fg);
+  }
+  .response__body :global(.tok-number),
+  .response__body :global(.tok-bool) {
+    color: var(--color-success);
+  }
+
+  .response__more {
+    padding: var(--space-2) var(--space-3);
+    border-top: 1px solid var(--color-border);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+  }
+
+  .response__more a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--color-fg-subtle);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .response__more a:hover {
+    color: var(--color-accent-text);
+  }
+
+  .op__run {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-top: var(--space-1);
+  }
+
+  .op__button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0.35rem 0.7rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-fg-muted);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    transition:
+      color var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out);
+  }
+
+  .op__button:hover:not(:disabled) {
+    color: var(--color-accent-text);
+    border-color: var(--color-accent-ring);
+  }
+
+  .op__button:disabled {
+    opacity: 0.5;
+    cursor: progress;
+  }
+
+  .op__result {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-fg-subtle);
+  }
+
+  .op__result[data-state='ok'] {
+    color: var(--color-success);
+  }
+
+  .op__result[data-state='error'] {
+    color: var(--color-accent-text);
+  }
+
+  .contract__schema {
+    border-top: 1px solid var(--color-border);
+    padding-top: var(--space-4);
+  }
+
+  .contract__schema-title {
+    cursor: pointer;
+    list-style: none;
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-fg-subtle);
+    margin-bottom: var(--space-3);
+  }
+
+  .contract__schema-title::-webkit-details-marker {
+    display: none;
+  }
+
+  .contract__schema-title:focus-visible {
+    outline: 2px solid var(--color-accent-text);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
+  }
+
+  .fields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .field {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+  }
+
+  .field__name {
+    color: var(--color-fg);
+    min-width: 7rem;
+  }
+
+  .field__type {
+    color: var(--color-fg-subtle);
+  }
+
+  .field__req {
+    color: var(--color-accent-text);
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
+  }
+
+  @media (max-width: 640px) {
+    .contract__scroll {
+      max-height: 28rem;
+    }
+
+    .contract__code {
+      font-size: 0.65rem;
+    }
+
+    .contract__doc {
+      padding: var(--space-4);
+    }
+
+    .field__name {
+      min-width: 6rem;
+    }
+  }
+</style>

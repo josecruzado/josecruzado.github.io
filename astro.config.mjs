@@ -1,35 +1,9 @@
 // @ts-check
-import { execSync } from 'node:child_process';
-
 import { defineConfig, fontProviders } from 'astro/config';
+
+import { lastCommitDate } from './src/lib/build-info.ts';
 import sitemap from '@astrojs/sitemap';
 import icon from 'astro-icon';
-
-/**
- * Fecha del último commit, para el `lastmod` del sitemap.
- *
- * Se usa la fecha del commit y no la del build a propósito: cualquier
- * rebuild —un bump de Dependabot, un redeploy manual— afirmaría que el
- * contenido cambió cuando no es cierto, y Google descarta el lastmod de
- * los sitios que lo inflan. La fecha del commit sí describe la última
- * modificación real del sitio.
- *
- * actions/checkout trae el último commit con su fecha incluso con
- * fetch-depth 1. Sin git disponible se omite el campo, que es preferible
- * a publicar una fecha inventada.
- */
-function lastCommitDate() {
-  try {
-    const iso = execSync('git log -1 --format=%cI', {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    }).trim();
-    const date = new Date(iso);
-    return Number.isNaN(date.getTime()) ? undefined : date;
-  } catch {
-    return undefined;
-  }
-}
 
 export default defineConfig({
   site: 'https://josecruzado.github.io',
@@ -126,13 +100,17 @@ export default defineConfig({
           'arrow-right',
           'arrow-up',
           'arrow-up-right',
+          'book-open',
+          'braces',
           'briefcase',
           'chart-no-axes-combined',
+          'chevron-down',
           'cloud',
           'code-2',
           'copy',
           'database',
           'download',
+          'file-code-2',
           'graduation-cap',
           'house',
           'languages',
@@ -140,6 +118,9 @@ export default defineConfig({
           'moon',
           'network',
           'package',
+          'panel-left-close',
+          'panel-left-open',
+          'play',
           'send',
           'server',
           'shield-check',

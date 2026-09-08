@@ -37,6 +37,8 @@ export const GET: APIRoute = async () => {
     `- GitHub: ${social.github}`,
     `- Email: ${author.email}`,
     `- CV en PDF: ${new URL('/cv.pdf', SITE.url).href}`,
+    `- CV estructurado (JSON Resume): ${new URL('/cv.json', SITE.url).href}`,
+    `- Contrato OpenAPI de estos endpoints: ${new URL('/openapi.json', SITE.url).href}`,
     `- Idiomas: ${author.languages.map((l) => `${l.name} (${l.level})`).join(', ')}`,
     '',
     '## En cifras',

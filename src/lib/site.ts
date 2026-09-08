@@ -43,6 +43,7 @@ export const SITE = {
     { href: '#inicio', label: 'Inicio', icon: 'lucide:house' },
     { href: '#experiencia', label: 'Experiencia', icon: 'lucide:briefcase' },
     { href: '#proyectos', label: 'Proyectos', icon: 'lucide:code-2' },
+    { href: '#contrato', label: 'Contrato', icon: 'lucide:braces' },
     { href: '#habilidades', label: 'Habilidades', icon: 'lucide:wrench' },
     { href: '#contacto', label: 'Contacto', icon: 'lucide:mail' },
   ],
