@@ -1,13 +1,13 @@
 ---
 company: Tata Consultancy Services
 client: Banco de Crédito del Perú (BCP)
-role: I.T. Analyst — Senior Backend Developer
+role: Analyst IT
 location: Lima, Perú
-period: Nov 2024 — Presente
+period: Nov 2024 — Ago 2026
 startDate: '2024-11-01'
-endDate: 'present'
-isCurrent: true
-order: 1
+endDate: '2026-08-14'
+isCurrent: false
+order: 2
 companyUrl: 'https://www.tcs.com'
 companyWikidata: 'https://www.wikidata.org/wiki/Q610228'
 summary: >-

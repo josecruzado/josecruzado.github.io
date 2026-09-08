@@ -7,7 +7,7 @@ period: Ago 2022 — Oct 2024
 startDate: '2022-08-01'
 endDate: '2024-10-31'
 isCurrent: false
-order: 2
+order: 3
 companyUrl: 'https://www.manpowergroup.com.pe/'
 summary: >-
   Trabajé en el Security Squad LATAM y el Decisioning Squad de Equifax Perú. Remediación de

@@ -6,7 +6,7 @@ period: Ene 2020 — Jul 2021
 startDate: '2020-01-01'
 endDate: '2021-07-31'
 isCurrent: false
-order: 4
+order: 5
 summary: >-
   Desarrollo de aplicaciones web internas para una empresa de telecomunicaciones,
   seguridad electrónica y soluciones agroindustriales. Mi primer rol full-stack.

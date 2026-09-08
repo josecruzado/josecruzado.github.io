@@ -7,7 +7,7 @@ period: Ago 2021 — Jul 2022
 startDate: '2021-08-01'
 endDate: '2022-07-31'
 isCurrent: false
-order: 3
+order: 4
 companyUrl: 'https://www.nttdata.com/'
 companyWikidata: 'https://www.wikidata.org/wiki/Q5963895'
 summary: >-
