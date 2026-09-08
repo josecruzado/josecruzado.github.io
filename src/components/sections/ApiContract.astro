@@ -1,0 +1,501 @@
+---
+/**
+ * Contrato — el sitio documentando su propia API.
+ *
+ * Panel izquierdo: el contrato OpenAPI serializado a YAML y tokenizado EN
+ * BUILD (ver lib/yaml.ts), así que el cliente no recibe resaltador alguno.
+ * Panel derecho: la lectura del contrato, como la daría una herramienta de
+ * documentación, con la posibilidad de ejecutar cada endpoint de verdad —
+ * son del mismo origen, así que el CSP los permite con connect-src 'self'.
+ *
+ * Ambos lados leen de lib/api-contract.ts, que es también lo que se sirve en
+ * /openapi.json. No hay simulación: lo que se lee es lo que responde.
+ */
+import Section from '../ui/Section.astro';
+import SectionHeader from '../ui/SectionHeader.astro';
+import Icon from '../ui/Icon.astro';
+import { API_CONTRACT } from '../../lib/api-contract';
+import { highlightYaml, toYaml } from '../../lib/yaml';
+
+const yaml = toYaml(API_CONTRACT);
+const highlighted = highlightYaml(yaml);
+const lineCount = yaml.split('\n').length;
+
+/** Aplana paths → operaciones para que el panel derecho las liste. */
+const operations = Object.entries(API_CONTRACT.paths).flatMap(([path, item]) =>
+  Object.entries(item).map(([method, operation]) => {
+    const response = Object.entries(operation.responses)[0];
+    const [status, detail] = response as [string, { description: string; content: object }];
+    return {
+      path,
+      method: method.toUpperCase(),
+      summary: operation.summary,
+      description: operation.description,
+      operationId: operation.operationId,
+      status,
+      statusText: detail.description,
+      mediaType: Object.keys(detail.content)[0],
+    };
+  })
+);
+
+const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.properties).map(
+  ([name, schema]) => ({
+    name,
+    type: 'type' in schema ? schema.type : 'object',
+    required: (API_CONTRACT.components.schemas.Resume.required as readonly string[]).includes(name),
+  })
+);
+---
+
+<Section id="contrato" ariaLabel="Contrato de la API" shape="split">
+  <SectionHeader
+    eyebrow="04 · Contrato"
+    size="md"
+    note="El sitio expone su propio perfil como API. Esto no es una maqueta: el contrato de la izquierda se sirve en /openapi.json y los endpoints responden de verdad."
+  >
+    Defino contratos a diario. Este describe el mío.
+  </SectionHeader>
+
+  <div class="contract">
+    <div class="contract__pane contract__pane--spec">
+      <header class="contract__bar">
+        <span class="contract__file">
+          <Icon name="lucide:file-code-2" size={14} />
+          openapi.yaml
+        </span>
+        <span class="contract__meta">{lineCount} líneas · OpenAPI {API_CONTRACT.openapi}</span>
+      </header>
+      <div class="contract__scroll">
+        <pre
+          class="contract__code"
+          tabindex="0"
+          role="region"
+          aria-label="Contrato OpenAPI en YAML"><code set:html={highlighted} /></pre>
+      </div>
+    </div>
+
+    <div class="contract__pane contract__pane--preview">
+      <header class="contract__bar">
+        <span class="contract__file">
+          <Icon name="lucide:book-open" size={14} />
+          Vista del contrato
+        </span>
+        <span class="contract__version">v{API_CONTRACT.info.version}</span>
+      </header>
+
+      <div class="contract__scroll">
+        <div class="contract__doc">
+          <h3 class="contract__title">{API_CONTRACT.info.title}</h3>
+          <p class="contract__summary">{API_CONTRACT.info.description}</p>
+          <p class="contract__server">
+            <span>Servidor</span>
+            <code>{API_CONTRACT.servers[0].url}</code>
+          </p>
+
+          <ul class="contract__ops" role="list">
+            {
+              operations.map((op) => (
+                <li class="op">
+                  <div class="op__head">
+                    <span class="op__method">{op.method}</span>
+                    <code class="op__path">{op.path}</code>
+                  </div>
+                  <p class="op__summary">{op.summary}</p>
+                  <p class="op__desc">{op.description}</p>
+                  <div class="op__response">
+                    <span class="op__status">{op.status}</span>
+                    <span class="op__media">{op.mediaType}</span>
+                    <span class="op__status-text">{op.statusText}</span>
+                  </div>
+                  <div class="op__run">
+                    <button type="button" class="op__button" data-run={op.path}>
+                      <Icon name="lucide:play" size={13} />
+                      Ejecutar
+                    </button>
+                    <output class="op__result" data-result={op.path} aria-live="polite" />
+                  </div>
+                </li>
+              ))
+            }
+          </ul>
+
+          <div class="contract__schema">
+            <p class="contract__schema-title">
+              <Icon name="lucide:braces" size={13} />
+              Schema · Resume
+            </p>
+            <ul class="fields" role="list">
+              {
+                schemaFields.map((field) => (
+                  <li class="field">
+                    <code class="field__name">{field.name}</code>
+                    <span class="field__type">{field.type}</span>
+                    {field.required && <span class="field__req">requerido</span>}
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Section>
+
+<script>
+  // Ejecuta el endpoint de verdad. Mismo origen, así que el CSP lo permite
+  // sin ampliar connect-src. Se muestran estado, tiempo y tamaño porque es
+  // lo que se mira al probar una API, no el cuerpo entero.
+  const format = (bytes: number) =>
+    bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+
+  for (const button of document.querySelectorAll<HTMLButtonElement>('[data-run]')) {
+    button.addEventListener('click', async () => {
+      const path = button.dataset.run;
+      if (!path) return;
+      const output = document.querySelector<HTMLElement>(`[data-result="${path}"]`);
+      if (!output) return;
+
+      button.disabled = true;
+      output.textContent = 'Ejecutando…';
+      output.dataset.state = 'pending';
+
+      const started = performance.now();
+      try {
+        const response = await fetch(path, { headers: { Accept: '*/*' } });
+        const body = await response.text();
+        const elapsed = Math.round(performance.now() - started);
+        output.dataset.state = response.ok ? 'ok' : 'error';
+        output.textContent = `${response.status} ${response.statusText || 'OK'} · ${elapsed} ms · ${format(new Blob([body]).size)}`;
+      } catch {
+        output.dataset.state = 'error';
+        output.textContent = 'La petición falló';
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
+</script>
+
+<style>
+  /* Recuadro único: los dos paneles comparten borde exterior y se separan
+     con una divisoria interna, como un editor con vista partida. */
+  .contract {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--color-bg-elevated);
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 900px) {
+    .contract {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+  }
+
+  .contract__pane {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .contract__pane--spec {
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+
+  @media (min-width: 900px) {
+    .contract__pane--spec {
+      border-bottom: 0;
+      border-right: 1px solid var(--color-border);
+    }
+  }
+
+  .contract__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-fg-subtle);
+  }
+
+  .contract__file {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-fg-muted);
+  }
+
+  .contract__version {
+    padding: 0.15rem 0.5rem;
+    border: 1px solid var(--color-accent-ring);
+    border-radius: var(--radius-sm);
+    color: var(--color-accent-text);
+  }
+
+  /* Altura acotada e igual en ambos paneles: el contrato es largo y la
+     sección no debe crecer sin control. */
+  .contract__scroll {
+    overflow: auto;
+    max-height: 30rem;
+    overscroll-behavior: contain;
+  }
+
+  .contract__code {
+    margin: 0;
+    padding: var(--space-4);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    line-height: 1.65;
+    tab-size: 2;
+    color: var(--color-fg-muted);
+  }
+
+  .contract__code:focus-visible {
+    outline: 2px solid var(--color-accent-text);
+    outline-offset: -2px;
+  }
+
+  /* Tokens del resaltado. Se apoyan en los tokens del sistema para que el
+     coloreado siga el tema sin una paleta paralela. */
+  .contract__code :global(.tok-key) {
+    color: var(--color-accent-text);
+  }
+  .contract__code :global(.tok-string) {
+    color: var(--color-fg);
+  }
+  .contract__code :global(.tok-number),
+  .contract__code :global(.tok-bool) {
+    color: var(--color-success);
+  }
+  .contract__code :global(.tok-punct) {
+    color: var(--color-fg-faint);
+  }
+
+  .contract__doc {
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .contract__title {
+    font-family: var(--font-display);
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+  }
+
+  .contract__summary {
+    font-size: var(--text-sm);
+    color: var(--color-fg-subtle);
+    line-height: var(--leading-normal);
+  }
+
+  .contract__server {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-fg-subtle);
+  }
+
+  .contract__server code {
+    color: var(--color-fg-muted);
+  }
+
+  .contract__ops {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .op {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    background: var(--color-bg);
+  }
+
+  .op__head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+
+  .op__method {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: var(--weight-bold);
+    letter-spacing: 0.08em;
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm);
+    background: var(--color-accent-soft);
+    border: 1px solid var(--color-accent-ring);
+    color: var(--color-accent-text);
+  }
+
+  .op__path {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-fg);
+  }
+
+  .op__summary {
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .op__desc {
+    font-size: var(--text-xs);
+    color: var(--color-fg-subtle);
+    line-height: var(--leading-normal);
+  }
+
+  .op__response {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    padding-top: var(--space-2);
+    border-top: 1px dashed var(--color-border);
+  }
+
+  .op__status {
+    color: var(--color-success);
+    font-weight: var(--weight-semibold);
+  }
+
+  .op__media {
+    color: var(--color-fg-muted);
+  }
+
+  .op__status-text {
+    color: var(--color-fg-subtle);
+  }
+
+  .op__run {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-top: var(--space-1);
+  }
+
+  .op__button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0.35rem 0.7rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-fg-muted);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    transition:
+      color var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out);
+  }
+
+  .op__button:hover:not(:disabled) {
+    color: var(--color-accent-text);
+    border-color: var(--color-accent-ring);
+  }
+
+  .op__button:disabled {
+    opacity: 0.5;
+    cursor: progress;
+  }
+
+  .op__result {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-fg-subtle);
+  }
+
+  .op__result[data-state='ok'] {
+    color: var(--color-success);
+  }
+
+  .op__result[data-state='error'] {
+    color: var(--color-accent-text);
+  }
+
+  .contract__schema {
+    border-top: 1px solid var(--color-border);
+    padding-top: var(--space-4);
+  }
+
+  .contract__schema-title {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-fg-subtle);
+    margin-bottom: var(--space-3);
+  }
+
+  .fields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .field {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+  }
+
+  .field__name {
+    color: var(--color-fg);
+    min-width: 7rem;
+  }
+
+  .field__type {
+    color: var(--color-fg-subtle);
+  }
+
+  .field__req {
+    color: var(--color-accent-text);
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
+  }
+
+  @media (max-width: 640px) {
+    .contract__scroll {
+      max-height: 22rem;
+    }
+
+    .contract__code {
+      font-size: 0.65rem;
+    }
+
+    .contract__doc {
+      padding: var(--space-4);
+    }
+
+    .field__name {
+      min-width: 6rem;
+    }
+  }
+</style>

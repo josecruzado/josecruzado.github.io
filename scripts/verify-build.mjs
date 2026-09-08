@@ -36,6 +36,7 @@ check('artefactos presentes', () => {
     '404.html',
     'llms.txt',
     'cv.json',
+    'openapi.json',
     'robots.txt',
     'sitemap-index.xml',
     'sitemap-0.xml',
@@ -164,6 +165,23 @@ check('cv.json íntegro y sincronizado', () => {
   }
 
   return `${cv.work.length} puestos · ${cv.projects.length} proyectos · ${cv.skills.length} categorías`;
+});
+
+// --- openapi.json: el contrato que la sección «Contrato» renderiza. Si deja
+// de describir lo que el sitio sirve, la sección miente.
+check('openapi.json describe los endpoints reales', () => {
+  const spec = JSON.parse(read('openapi.json'));
+  assert(spec.openapi?.startsWith('3.'), `versión OpenAPI inesperada: ${spec.openapi}`);
+  assert(spec.info?.title && spec.info?.version, 'info incompleto');
+
+  // Cada path declarado debe existir de verdad en el build.
+  for (const path of Object.keys(spec.paths)) {
+    const file = path.replace(/^\//, '');
+    assert(existsSync(join(DIST, file)), `el contrato declara ${path} pero no se publica`);
+  }
+
+  assert(!JSON.stringify(spec).includes('+51 9'), 'el contrato contiene un teléfono');
+  return `${Object.keys(spec.paths).length} endpoints · OpenAPI ${spec.openapi}`;
 });
 
 // --- llms.txt debe llevar contenido real, no un esqueleto vacío

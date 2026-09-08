@@ -31,14 +31,17 @@ src/
 │   ├── ui/          Button, Card, Section, Badge, Icon
 │   ├── seo/         SEO y JSON-LD
 │   ├── nav/         FloatingNav
-│   └── sections/    Hero, About, Experience, Projects, Skills, Education, Contact
+│   └── sections/    Hero, About, Experience, Projects, ApiContract,
+│                     Skills, Education, Contact
 ├── content/
 │   ├── experience/  Experiencia profesional validada con Zod
 │   └── projects/    Proyectos/casos destacados
 ├── icons/           SVG propios para astro-icon (hoy vacío, ver su README)
 ├── layouts/         BaseLayout y PageLayout
-├── lib/             site.ts, skills.ts, education.ts, build-info.ts
-├── pages/           index.astro, 404.astro, llms.txt.ts y cv.json.ts
+├── lib/             site.ts, skills.ts, education.ts, build-info.ts,
+│                   api-contract.ts, yaml.ts
+├── pages/           index.astro, 404.astro, llms.txt.ts, cv.json.ts,
+│                   openapi.json.ts
 ├── scripts/         smooth-scroll.ts y magnetic.ts
 └── styles/          tokens, reset, utilities y global
 ```
@@ -130,6 +133,11 @@ Incluye:
 - Sitemap con `lastmod` tomado del último commit, y robots.txt.
 - `/llms.txt` para crawlers de IA, generado desde `site.ts`, `skills.ts`,
   `education.ts` y las content collections.
+- `/openapi.json` con el contrato que describe `/cv.json` y `/llms.txt`. Es
+  lo mismo que renderiza la sección «Contrato» de la web: ambos leen de
+  `src/lib/api-contract.ts`, así que la documentación no puede divergir de
+  lo que se sirve. El YAML se serializa y resalta en build
+  (`src/lib/yaml.ts`) para no depender de Shiki, incompatible con el CSP.
 - `/cv.json` con el CV en [JSON Resume](https://jsonresume.org), un esquema
   publicado que herramientas de terceros y ATS saben leer. Se genera desde
   las mismas fuentes y se anuncia con `rel="alternate"` en el `<head>`.
