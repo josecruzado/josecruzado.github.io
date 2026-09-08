@@ -56,11 +56,7 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
 ---
 
 <Section id="contrato" ariaLabel="Contrato de la API" shape="split">
-  <SectionHeader
-    eyebrow="04 · Contrato"
-    size="md"
-    note="El sitio expone su propio perfil como API. Esto no es una maqueta: el contrato de la izquierda se sirve en /openapi.json y los endpoints responden de verdad."
-  >
+  <SectionHeader eyebrow="04 · Contrato" size="md">
     Defino contratos a diario. Este describe el mío.
   </SectionHeader>
 
@@ -72,8 +68,23 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
           openapi.yaml
         </span>
         <span class="contract__meta">{lineCount} líneas · OpenAPI {API_CONTRACT.openapi}</span>
+        <button
+          type="button"
+          class="contract__collapse"
+          data-collapse
+          aria-expanded="true"
+          aria-controls="contract-spec"
+        >
+          <Icon
+            name="lucide:panel-left-close"
+            size={14}
+            class="collapse-icon collapse-icon--close"
+          />
+          <Icon name="lucide:panel-left-open" size={14} class="collapse-icon collapse-icon--open" />
+          <span class="sr-only">Contraer el contrato</span>
+        </button>
       </header>
-      <div class="contract__scroll">
+      <div class="contract__scroll" id="contract-spec">
         <pre
           class="contract__code"
           tabindex="0"
@@ -288,6 +299,25 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
     });
   }
 
+  // ------------------------------------------------- Plegar el contrato
+  // Deja la vista a ancho completo cuando se quiere leer solo la
+  // documentación. El estado vive en un atributo del contenedor, así que
+  // todo el comportamiento visual es CSS; aquí solo se conmuta.
+  const contract = document.querySelector<HTMLElement>('.contract');
+  const collapseButton = document.querySelector<HTMLButtonElement>('[data-collapse]');
+  const collapseLabel = collapseButton?.querySelector('.sr-only');
+
+  collapseButton?.addEventListener('click', () => {
+    if (!contract) return;
+    const collapsed = contract.toggleAttribute('data-collapsed');
+    collapseButton.setAttribute('aria-expanded', String(!collapsed));
+    if (collapseLabel) {
+      collapseLabel.textContent = collapsed ? 'Expandir el contrato' : 'Contraer el contrato';
+    }
+    // Con el contrato plegado no hay líneas visibles que resaltar.
+    if (collapsed) clearHighlight();
+  });
+
   // --------------------------------------- Vínculo entre los dos paneles
   // Al enfocar o pasar por encima de una operación, el contrato de la
   // izquierda resalta y desplaza sus líneas. Es lo que hacen las
@@ -400,7 +430,9 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
      sección no debe crecer sin control. */
   .contract__scroll {
     overflow: auto;
-    max-height: 30rem;
+    /* 40rem deja ver ~55 líneas del contrato de un vistazo sin que la caja
+       desborde un viewport de 900px con el header de la sección encima. */
+    max-height: 40rem;
     overscroll-behavior: contain;
   }
 
@@ -454,6 +486,86 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
   }
   .contract__code :global(.tok-punct) {
     color: var(--color-fg-faint);
+  }
+
+  /* Plegado del contrato: al contraer, el panel izquierdo se reduce a su
+     barra y la vista pasa a ocupar todo el ancho. En mobile el layout ya es
+     de una columna, así que contraer simplemente oculta el YAML. */
+  .contract__collapse {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem;
+    margin-left: var(--space-1);
+    border-radius: var(--radius-sm);
+    color: var(--color-fg-subtle);
+    flex-shrink: 0;
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .contract__collapse:hover {
+    color: var(--color-accent-text);
+  }
+
+  .contract__collapse :global(.collapse-icon--open) {
+    display: none;
+  }
+
+  .contract[data-collapsed] .contract__collapse :global(.collapse-icon--close) {
+    display: none;
+  }
+
+  .contract[data-collapsed] .contract__collapse :global(.collapse-icon--open) {
+    display: block;
+  }
+
+  .contract[data-collapsed] .contract__pane--spec .contract__scroll {
+    display: none;
+  }
+
+  .contract[data-collapsed] .contract__pane--spec .contract__bar {
+    border-bottom: 0;
+  }
+
+  /* Plegado: el nombre y el contador desaparecen y queda solo el botón.
+     Se probó una franja con el texto en vertical y se descartó — obligaba
+     a girar tipografía por un dato que ya se conoce, y bastaba un selector
+     mal acotado para rotar también la cabecera de la vista. */
+  .contract[data-collapsed] .contract__pane--spec .contract__file,
+  .contract[data-collapsed] .contract__pane--spec .contract__meta {
+    display: none;
+  }
+
+  @media (min-width: 900px) {
+    .contract[data-collapsed] {
+      grid-template-columns: 2.75rem minmax(0, 1fr);
+    }
+
+    .contract[data-collapsed] .contract__pane--spec .contract__bar {
+      justify-content: center;
+      height: 100%;
+      align-items: flex-start;
+      padding: var(--space-3) 0;
+      border-bottom: 0;
+    }
+
+    .contract[data-collapsed] .contract__collapse {
+      margin-left: 0;
+    }
+  }
+
+  /* En mobile el layout ya es de una columna: contraer solo oculta el YAML
+     y la barra se queda como cabecera plegable a ancho completo. */
+  @media (max-width: 899px) {
+    .contract[data-collapsed] .contract__pane--spec .contract__bar {
+      justify-content: flex-start;
+      gap: var(--space-2);
+    }
+
+    .contract[data-collapsed] .contract__pane--spec .contract__bar::before {
+      content: 'openapi.yaml';
+      font-family: var(--font-mono);
+      color: var(--color-fg-muted);
+    }
   }
 
   .contract__doc {
@@ -776,7 +888,7 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
 
   @media (max-width: 640px) {
     .contract__scroll {
-      max-height: 22rem;
+      max-height: 28rem;
     }
 
     .contract__code {

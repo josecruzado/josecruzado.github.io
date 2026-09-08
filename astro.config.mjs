@@ -117,6 +117,8 @@ export default defineConfig({
           'moon',
           'network',
           'package',
+          'panel-left-close',
+          'panel-left-open',
           'play',
           'send',
           'server',
