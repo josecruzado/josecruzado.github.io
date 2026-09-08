@@ -22,8 +22,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # El nombre del job invocador se antepone al del job invocado para formar
+  # el nombre del check: aquí "Compilación / Calidad y build". Llamarlo
+  # "Calidad y build" producía "Calidad y build / Calidad y build".
+  #
+  # Tiene que ser además DISTINTO del de ci.yml ("Calidad"): si ambos
+  # workflows emitieran el mismo contexto, la protección de rama no podría
+  # distinguir cuál lo satisface.
   build:
-    name: Calidad y build
+    name: Compilación
     uses: ./.github/workflows/build.yml
     with:
       upload-pages-artifact: true
