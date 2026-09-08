@@ -62,7 +62,11 @@ const navItems = SITE.nav;
   function syncThemeColor() {
     if (!dynamicMeta) return;
     const isLight = root.dataset.theme === 'light';
-    dynamicMeta.setAttribute('content', isLight ? '#ffffff' : '#000000');
+    // Los valores los publica SEO.astro desde SITE.seo como data-*.
+    const color = isLight
+      ? dynamicMeta.dataset.themeColorLight
+      : dynamicMeta.dataset.themeColorDark;
+    if (color) dynamicMeta.setAttribute('content', color);
   }
 
   syncToggle();
@@ -77,17 +81,17 @@ const navItems = SITE.nav;
 
   toggle?.addEventListener('click', () => {
     // View Transitions API: crossfade nativo entre temas.
-    // Fallback automático en browsers sin soporte (Firefox <122 al
-    // momento de escribir esto). El reduce-motion desactiva la
-    // transición visual respetando la preferencia del usuario.
+    // Fallback automático en browsers sin soporte. El reduce-motion
+    // desactiva la transición visual respetando la preferencia.
+    //
+    // Sin cast: Document.startViewTransition está tipado en la lib.dom
+    // de TypeScript, así que el guard `in document` ya estrecha el tipo.
     const supportsViewTransition =
       'startViewTransition' in document &&
       !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (supportsViewTransition) {
-      (
-        document as Document & { startViewTransition: (cb: () => void) => void }
-      ).startViewTransition(applyTheme);
+      document.startViewTransition(applyTheme);
       return;
     }
     applyTheme();
@@ -109,6 +113,10 @@ const navItems = SITE.nav;
   // en pestañas distintas a la que mutó localStorage — sin loops.
   window.addEventListener('storage', (event) => {
     if (event.key !== THEME_KEY || !event.newValue) return;
+    // Mismo criterio que el bootstrap de BaseLayout: solo se acepta un
+    // tema conocido. El valor llega de otra pestaña, así que no se puede
+    // asumir que lo haya escrito este código.
+    if (event.newValue !== 'light' && event.newValue !== 'dark') return;
     if (event.newValue !== root.dataset.theme) {
       root.dataset.theme = event.newValue;
       syncToggle();
@@ -409,7 +417,7 @@ const navItems = SITE.nav;
     /* Mobile: anula el pill background del desktop, usa color accent
        en el icono + dot indicador anclado al wrapper. */
     .nav__item.is-active {
-      color: var(--color-accent);
+      color: var(--color-accent-text);
       background: transparent;
       box-shadow: none;
     }
@@ -426,7 +434,7 @@ const navItems = SITE.nav;
       width: 0.25rem;
       height: 0.25rem;
       border-radius: var(--radius-full);
-      background: var(--color-accent);
+      background: var(--color-accent-text);
       transform: translateX(-50%);
     }
     /* Sin override de focus-visible aquí — el global de reset.css

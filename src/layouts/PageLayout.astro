@@ -1,6 +1,8 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import FloatingNav from '../components/nav/FloatingNav.astro';
+import Icon from '../components/ui/Icon.astro';
+import { SITE } from '../lib/site';
 
 interface Props {
   title?: string;
@@ -16,14 +18,72 @@ const props = Astro.props;
 
 <BaseLayout {...props}>
   <FloatingNav />
-  <!--
+  {
+    /*
     tabindex="-1" permite que el skip-link mueva el foco aquí
     realmente. Sin esto el browser hace scroll a #main pero deja el
     foco en <body>; el siguiente Tab cae en el nav, frustrando el
     propósito del skip (WCAG 2.4.1). -1 lo hace programáticamente
     enfocable sin entrar en el orden tabular natural.
-  -->
+  */
+  }
   <main id="main" tabindex="-1">
     <slot />
   </main>
+
+  {
+    /* El documento terminaba en </section>, sin landmark de cierre.
+       <footer> es un landmark contentinfo que los lectores de pantalla
+       exponen en su lista de regiones, y su ausencia obligaba a recorrer
+       la página entera para confirmar que no quedaba contenido.
+
+       Sin año en el copyright a propósito: el sitio es estático y el
+       valor quedaría congelado en el momento del build, de modo que
+       cualquier enero mostraría un año vencido hasta el siguiente
+       despliegue. Un aviso de copyright es válido sin fecha. */
+  }
+  <footer class="footer">
+    <div class="container footer__inner">
+      <p class="footer__copy">© {SITE.author.name}</p>
+      <a href="#inicio" class="footer__top">
+        Volver arriba
+        <Icon name="lucide:arrow-up" size={14} />
+      </a>
+    </div>
+  </footer>
 </BaseLayout>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--color-border);
+    padding-block: var(--space-8);
+  }
+
+  .footer__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .footer__copy {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-fg-subtle);
+  }
+
+  .footer__top {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-fg-muted);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .footer__top:hover {
+    color: var(--color-accent-text);
+  }
+</style>

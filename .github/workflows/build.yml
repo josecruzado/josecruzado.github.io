@@ -1,0 +1,69 @@
+# Workflow reutilizable: calidad + build + verificación del output.
+#
+# Lo invocan ci.yml (validación de pull requests) y deploy.yml (publicación).
+# Tenerlo en un único sitio garantiza que un PR se valide exactamente con las
+# mismas comprobaciones que después despliegan, sin que las dos definiciones
+# se separen con el tiempo.
+name: Build
+
+on:
+  workflow_call:
+    inputs:
+      upload-pages-artifact:
+        description: Sube dist/ como artefacto de Pages para que lo consuma el job de deploy.
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Calidad y build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          # La versión vive en .nvmrc, que también leen fnm y nvm en local:
+          # una sola fuente para CI y para desarrollo.
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # La Fonts API descarga las fuentes del CDN de fontsource y las cachea
+      # en node_modules/.astro/fonts. `npm ci` borra node_modules, así que sin
+      # esto cada ejecución vuelve a bajarlas y el deploy queda a merced de que
+      # el CDN responda. Se restaura DESPUÉS de npm ci por ese mismo motivo.
+      # La clave depende de astro.config.mjs, que es donde se declaran.
+      - name: Restaurar caché de fuentes
+        uses: actions/cache@v6
+        with:
+          path: node_modules/.astro/fonts
+          key: astro-fonts-${{ runner.os }}-${{ hashFiles('astro.config.mjs') }}
+
+      - name: Prettier
+        run: npm run format:check
+
+      - name: Astro check (tipos + esquemas de contenido)
+        run: npm run check
+
+      - name: Build
+        run: npm run build
+
+      # Comprueba el HTML que realmente se publica: ni astro check ni Prettier
+      # ven el output. Verifica las decisiones que una regresión podría
+      # deshacer sin que el build fallara — CSP sin unsafe-inline, JSON-LD
+      # válido, canonical y hreflang alineados, CSS inline, landmarks.
+      - name: Verificar el build
+        run: npm run verify
+
+      - name: Subir artefacto de Pages
+        if: inputs.upload-pages-artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./dist

@@ -1,61 +1,45 @@
-name: Deploy Astro to GitHub Pages
+# Publicación en GitHub Pages.
+#
+# Reutiliza build.yml para que lo que se despliega pase exactamente por las
+# mismas comprobaciones que un pull request.
+name: Deploy
 
 on:
   push:
     branches: ['develop']
   workflow_dispatch:
 
+# Mínimo privilegio: los permisos de Pages se conceden solo al job que los
+# necesita. Antes estaban a nivel de workflow y los heredaban también los
+# jobs de calidad, que no publican nada.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: 'pages'
+  # Sin cancelación: interrumpir un despliegue a medias puede dejar Pages en
+  # un estado intermedio. Las ejecuciones se encolan.
+  group: pages
   cancel-in-progress: false
 
 jobs:
-  quality:
-    name: Quality checks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: Astro check (type + content)
-        run: npm run check
-      - name: Prettier check
-        run: npm run format:check
-
   build:
-    name: Build site
-    runs-on: ubuntu-latest
-    needs: quality
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: Build Astro site
-        run: npm run build
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./dist
+    name: Calidad y build
+    uses: ./.github/workflows/build.yml
+    with:
+      upload-pages-artifact: true
 
   deploy:
-    name: Deploy to GitHub Pages
+    name: Publicar
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy
+      - name: Desplegar en GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

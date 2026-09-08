@@ -6,13 +6,8 @@
 import '../styles/global.css';
 import SEO from '../components/seo/SEO.astro';
 import JsonLd from '../components/seo/JsonLd.astro';
+import { Font } from 'astro:assets';
 import { SITE } from '../lib/site';
-// `?url` import: Astro/Vite emiten el archivo al pipeline de assets y
-// devuelven la URL hasheada final (misma que la del @font-face en CSS).
-// Garantiza que el preload apunte al mismo archivo que cargará el browser,
-// no a una ruta paralela que generaría una doble descarga.
-import interVariable from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
-import cascadiaVariable from '@fontsource-variable/cascadia-code/files/cascadia-code-latin-wght-normal.woff2?url';
 
 const htmlLang = SITE.locale.split('-')[0];
 
@@ -47,21 +42,22 @@ const {
       noindex={noindex}
     />
     <JsonLd />
-    <!--
-      Preload de las dos fuentes variables ANTES del CSS para que el
-      browser inicie la descarga en el momento más temprano posible
-      del head parsing. Combinado con font-display: swap y size-adjust,
-      la fuente real está disponible antes del primer paint en la
-      mayoría de los casos → sin FOUT visible. crossorigin es requerido
-      por la spec para fonts (CORS) incluso same-origin.
-    -->
-    <link rel="preload" href={interVariable} as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href={cascadiaVariable} as="font" type="font/woff2" crossorigin />
+    {
+      /* <Font /> emite el @font-face y, con preload, el <link rel=preload>
+         apuntando al mismo archivo hasheado. Va antes del CSS para que la
+         descarga arranque en el punto más temprano del parsing del head.
+         Las dos fuentes se precargan porque ambas son visibles en el primer
+         viewport: Inter en el cuerpo e Cascadia en los display headings. */
+    }
+    <Font cssVariable="--font-inter" preload />
+    <Font cssVariable="--font-cascadia" preload />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <!-- Theme bootstrap — aplicado antes del primer paint para evitar
+    {
+      /* Theme bootstrap — aplicado antes del primer paint para evitar
          flash de tema incorrecto. Lee localStorage o prefers-color-scheme,
          setea data-theme, y sincroniza meta theme-color dinámico para
-         que la status bar del browser refleje la elección desde el inicio. -->
+         que la status bar del browser refleje la elección desde el inicio. */
+    }
     <script is:inline>
       (() => {
         const html = document.documentElement;
@@ -70,10 +66,20 @@ const {
           const prefers = window.matchMedia('(prefers-color-scheme: light)').matches
             ? 'light'
             : 'dark';
-          const theme = saved || prefers;
+          // Se valida el valor persistido en lugar de confiar en él: un
+          // localStorage corrupto (otra extensión, una clave 'theme'
+          // reutilizada, un valor de una versión anterior) dejaba
+          // data-theme sin coincidir con ningún selector de tokens.css,
+          // el documento se quedaba sin color-scheme y light-dark()
+          // resolvía a claro sobre un HTML que declaraba otro tema.
+          const theme = saved === 'light' || saved === 'dark' ? saved : prefers;
           html.dataset.theme = theme;
           const meta = document.querySelector('meta[data-dynamic-theme]');
-          if (meta) meta.setAttribute('content', theme === 'light' ? '#ffffff' : '#000000');
+          // Los hex viven en site.ts y llegan como data-* en la propia
+          // meta: aquí no se repite ningún color.
+          const color =
+            meta && meta.dataset[theme === 'light' ? 'themeColorLight' : 'themeColorDark'];
+          if (color) meta.setAttribute('content', color);
         } catch (_) {
           /* SSR/no-storage: usa el default del HTML */
         }

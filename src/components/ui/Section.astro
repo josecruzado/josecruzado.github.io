@@ -4,11 +4,25 @@
  * Sin eyebrow/subtitle por defecto; las secciones que quieran header
  * lo construyen como contenido para evitar el patrón repetido.
  */
+
+/**
+ * Forma del contenido que envuelve la sección. Solo se usa para estimar
+ * su altura mientras está fuera de pantalla (`contain-intrinsic-size`).
+ *
+ * Se nombra por la FORMA del layout y no por la sección concreta a
+ * propósito: un primitivo de propósito general no debería conocer los
+ * ids de la aplicación. Antes las alturas se seleccionaban desde aquí
+ * con selectores por `data-nav-section`, de modo que renombrar una
+ * sección descalibraba el anchor scroll en silencio.
+ */
+type ContentShape = 'bio' | 'tabs' | 'cards' | 'list' | 'timeline';
+
 interface Props {
   id: string;
   ariaLabel?: string;
-  narrow?: boolean;
   fullHeight?: boolean;
+  /** Ver ContentShape. Sin valor se aplica la estimación genérica. */
+  shape?: ContentShape;
   /**
    * Habilita `content-visibility: auto` — el browser omite el render
    * de la sección mientras está offscreen. Default: true para
@@ -22,13 +36,12 @@ interface Props {
 const {
   id,
   ariaLabel,
-  narrow = false,
   fullHeight = false,
   lazyRender = !fullHeight,
+  shape,
   class: className,
 } = Astro.props;
 
-const containerClass = narrow ? 'container container--narrow' : 'container';
 const sectionClass = [
   'section',
   fullHeight && 'section--full',
@@ -39,8 +52,13 @@ const sectionClass = [
   .join(' ');
 ---
 
-<section class={sectionClass} aria-label={ariaLabel} data-nav-section={id}>
-  <div id={id} class={containerClass}>
+<section
+  class={sectionClass}
+  aria-label={ariaLabel}
+  data-nav-section={id}
+  data-shape={lazyRender ? shape : undefined}
+>
+  <div id={id} class="container">
     <slot />
   </div>
 </section>
@@ -64,48 +82,46 @@ const sectionClass = [
     align-items: center;
   }
 
-  /* content-visibility: auto pinta la sección solo cuando se acerca
-     al viewport. El browser memoriza el alto real tras el primer
-     render (contain-intrinsic-size: auto), pero el VALOR inicial es
-     el que determina la posición de un anchor scroll hacia secciones
-     aún no rendereadas. Ajustes calibrados por sección via el
-     atributo data-nav-section que ya emitimos: evita undershoot en
-     clicks tempranos a #educacion / #contacto. */
+  /* content-visibility: auto pinta la sección solo cuando se acerca al
+     viewport. El browser memoriza el alto real tras el primer render
+     (contain-intrinsic-size: auto), pero el VALOR inicial es el que
+     determina la posición de un anchor scroll hacia secciones todavía
+     sin renderear. De ahí que cada forma de contenido declare su propia
+     estimación: evita el undershoot en clicks tempranos del menú. */
   .section--lazy {
     content-visibility: auto;
     contain-intrinsic-size: auto 800px;
   }
 
-  .section--lazy[data-nav-section='sobre-mi'] {
+  .section--lazy[data-shape='bio'] {
     contain-intrinsic-size: auto 600px;
   }
-  .section--lazy[data-nav-section='experiencia'] {
+  .section--lazy[data-shape='tabs'] {
     contain-intrinsic-size: auto 1200px;
   }
-  .section--lazy[data-nav-section='proyectos'] {
+  .section--lazy[data-shape='cards'] {
     contain-intrinsic-size: auto 1400px;
   }
-  .section--lazy[data-nav-section='habilidades'] {
-    contain-intrinsic-size: auto 700px;
-  }
-  .section--lazy[data-nav-section='educacion'] {
+  .section--lazy[data-shape='list'],
+  .section--lazy[data-shape='timeline'] {
     contain-intrinsic-size: auto 700px;
   }
 
-  /* En mobile las secciones colapsan a una columna y crecen verticalmente.
-     Ajustamos hacia arriba para que la suma de placeholders ≈ altura real
-     antes del primer render. */
+  /* En mobile las secciones colapsan a una columna y crecen en vertical.
+     Las estimaciones suben para que la suma de placeholders se acerque a
+     la altura real antes del primer render. `bio` no cambia: su altura
+     apenas varía al colapsar. */
   @media (max-width: 640px) {
-    .section--lazy[data-nav-section='experiencia'] {
+    .section--lazy[data-shape='tabs'] {
       contain-intrinsic-size: auto 1600px;
     }
-    .section--lazy[data-nav-section='proyectos'] {
+    .section--lazy[data-shape='cards'] {
       contain-intrinsic-size: auto 2200px;
     }
-    .section--lazy[data-nav-section='habilidades'] {
+    .section--lazy[data-shape='list'] {
       contain-intrinsic-size: auto 900px;
     }
-    .section--lazy[data-nav-section='educacion'] {
+    .section--lazy[data-shape='timeline'] {
       contain-intrinsic-size: auto 1100px;
     }
   }

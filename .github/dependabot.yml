@@ -17,11 +17,27 @@ updates:
           - '@iconify-json/*'
       dev:
         dependency-type: development
+    ignore:
+      # TypeScript 7 (compilador nativo en Go) ships sin API programática
+      # estable — llega en 7.1 — y el tooling de Astro, con él
+      # @astrojs/check, todavía no puede usarlo. Un PR que suba el major
+      # rompería `npm run check` y con él el gate de CI. Se quita esta
+      # línea cuando salga 7.1 y @astrojs/check lo soporte; los minor y
+      # patch de la 6.x siguen llegando.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
     commit-message:
       prefix: 'chore(deps)'
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    groups:
+      # Sin agrupar llegaban cuatro PRs sueltos al mes. Las actions de este
+      # repositorio se actualizan juntas o no se actualizan.
+      actions:
+        patterns:
+          - '*'
     commit-message:
       prefix: 'chore(ci)'

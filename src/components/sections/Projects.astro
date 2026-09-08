@@ -25,7 +25,7 @@ const featuredTech = featuredProject
   : null;
 ---
 
-<Section id="proyectos" ariaLabel="Proyectos">
+<Section id="proyectos" ariaLabel="Proyectos" shape="cards">
   <SectionHeader
     eyebrow="03 · Portfolio"
     size="md"
@@ -194,17 +194,19 @@ const featuredTech = featuredProject
     background: var(--color-bg-elevated);
     border: 1px solid var(--color-border);
     margin-bottom: var(--space-2);
-    transition: all var(--duration-base) var(--ease-out);
+    /* Sin transition: el icono no tiene ningún estado que cambie tras el
+       render inicial. `transition: all` solo obligaba al motor a vigilar
+       todas las propiedades animables sin que ninguna se moviera nunca. */
   }
 
   .project .project__icon {
-    color: var(--color-accent);
+    color: var(--color-accent-text);
     border-color: var(--color-accent-ring);
     box-shadow: 0 0 16px var(--color-accent-soft);
   }
 
   .project__kicker {
-    color: var(--color-accent);
+    color: var(--color-accent-text);
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     letter-spacing: 0.08em;
@@ -249,7 +251,7 @@ const featuredTech = featuredProject
   .project__case dt {
     font-family: var(--font-mono);
     font-size: var(--text-xs);
-    color: var(--color-accent);
+    color: var(--color-accent-text);
     text-transform: uppercase;
     letter-spacing: 0.08em;
   }
@@ -276,7 +278,7 @@ const featuredTech = featuredProject
   }
 
   .project__impact :global(svg) {
-    color: var(--color-accent);
+    color: var(--color-accent-text);
   }
 
   .project__tech {

@@ -11,27 +11,13 @@ type Tag = 'div' | 'article' | 'li' | 'a';
 interface Props {
   as?: Tag;
   href?: string;
-  /**
-   * RESERVED — añade la clase `.card--interactive` pero hoy no aplica
-   * ningún estilo extra (el lift ya es universal). Reservado para futuras
-   * Cards clickeables (project con link público, ej.) que necesiten
-   * indicación visual de afordancia distinta — spotlight, cursor, etc.
-   * Default: `true` cuando se pasa `href`, `false` en otro caso.
-   */
-  interactive?: boolean;
   class?: string;
   accent?: 'cyan' | 'blue' | 'purple' | 'pink' | 'orange' | 'green';
 }
 
-const {
-  as = 'div',
-  href,
-  interactive = !!href,
-  class: className,
-  accent = 'cyan',
-} = Astro.props as Props;
+const { as = 'div', href, class: className, accent = 'cyan' } = Astro.props as Props;
 const Tag = as;
-const classes = ['card', interactive && 'card--interactive', className].filter(Boolean).join(' ');
+const classes = ['card', className].filter(Boolean).join(' ');
 ---
 
 <Tag class={classes} data-accent={accent} {...href ? { href } : {}}>
