@@ -1,0 +1,42 @@
+# Validación de pull requests.
+#
+# Antes no existía: el único workflow se disparaba con el push a `develop`,
+# es decir DESPUÉS de mergear. Los PRs de Dependabot llegaban a develop sin
+# que nada los hubiera compilado, y una actualización que rompiera el build
+# solo se descubría cuando el deploy ya había fallado.
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Un push nuevo sobre el mismo PR cancela la ejecución anterior: aquí no
+  # hay nada que publicar, así que sobrescribir es lo correcto.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Calidad
+    uses: ./.github/workflows/build.yml
+
+  audit:
+    name: Auditoría de dependencias
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # Solo en PRs, nunca en la ruta de despliegue: una advertencia de
+      # seguridad nueva debe frenar una actualización de dependencias, no un
+      # cambio de contenido urgente que no la introdujo.
+      - name: npm audit
+        run: npm audit --audit-level=high
