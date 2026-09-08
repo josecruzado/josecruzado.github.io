@@ -7,7 +7,7 @@
  * de forma deliberada y que una regresión podría deshacer en silencio,
  * porque el build seguiría pasando igual.
  */
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 const DIST = 'dist';
@@ -35,6 +35,7 @@ check('artefactos presentes', () => {
     'index.html',
     '404.html',
     'llms.txt',
+    'cv.json',
     'robots.txt',
     'sitemap-index.xml',
     'sitemap-0.xml',
@@ -121,6 +122,48 @@ check('sitemap con lastmod', () => {
   assert(lastmod, 'el sitemap no declara lastmod');
   assert(!Number.isNaN(Date.parse(lastmod)), `lastmod no parseable: ${lastmod}`);
   return lastmod;
+});
+
+// --- cv.json: contrato público. Validado contra el esquema oficial de JSON
+// Resume con ajv; aquí se comprueban los invariantes que una regresión
+// realista rompería, sin arrastrar el validador como dependencia.
+check('cv.json íntegro y sincronizado', () => {
+  const cv = JSON.parse(read('cv.json'));
+
+  for (const key of ['$schema', 'basics', 'work', 'skills', 'projects', 'meta']) {
+    assert(key in cv, `falta la clave "${key}"`);
+  }
+
+  // El teléfono se retiró del sitio; este endpoint no puede reintroducirlo.
+  assert(!('phone' in cv.basics), 'basics expone un teléfono');
+  assert(!JSON.stringify(cv).includes('+51 9'), 'el CV contiene un teléfono');
+
+  // Se genera desde las content collections: si divergen, algo dejó de leerlas.
+  const experiencias = readdirSync('src/content/experience').filter((f) => f.endsWith('.md'));
+  const proyectos = readdirSync('src/content/projects').filter((f) => f.endsWith('.md'));
+  assert(
+    cv.work.length === experiencias.length,
+    `work tiene ${cv.work.length} entradas y hay ${experiencias.length} experiencias`
+  );
+  assert(
+    cv.projects.length === proyectos.length,
+    `projects tiene ${cv.projects.length} entradas y hay ${proyectos.length} proyectos`
+  );
+
+  // Exactamente un puesto vigente, y es el primero.
+  const vigentes = cv.work.filter((w) => !w.endDate);
+  assert(vigentes.length === 1, `${vigentes.length} puestos sin endDate, se esperaba 1`);
+  assert(cv.work[0] === vigentes[0], 'el puesto vigente no encabeza la lista');
+
+  // JSON Resume exige ISO 8601: 'present' u otro texto humano lo invalidaría.
+  const iso = /^\d{4}(-\d{2}){0,2}$/;
+  for (const w of cv.work) {
+    assert(iso.test(w.startDate), `startDate no ISO en "${w.name}": ${w.startDate}`);
+    assert(!w.endDate || iso.test(w.endDate), `endDate no ISO en "${w.name}": ${w.endDate}`);
+    assert(w.highlights?.length > 0, `"${w.name}" sin highlights`);
+  }
+
+  return `${cv.work.length} puestos · ${cv.projects.length} proyectos · ${cv.skills.length} categorías`;
 });
 
 // --- llms.txt debe llevar contenido real, no un esqueleto vacío

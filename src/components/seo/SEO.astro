@@ -157,6 +157,19 @@ const homeUrl = new URL('/', SITE.url).href;
 <link rel="sitemap" type="application/xml" href="/sitemap-index.xml" />
 
 {
+  /* /cv.json es una representación alternativa de esta misma página: los
+     mismos datos en JSON Resume, un esquema publicado que herramientas de
+     terceros y ATS saben leer. `rel="alternate"` es el mecanismo estándar
+     para anunciarla sin ocupar espacio en la interfaz. */
+}
+<link
+  rel="alternate"
+  type="application/json"
+  href={new URL('/cv.json', SITE.url).href}
+  title="CV en formato JSON Resume"
+/>
+
+{
   /* rel="me" — verificación cruzada de identidad. Permite a indexers,
      agregadores y Mastodon confirmar que este sitio y los perfiles
      externos pertenecen a la misma persona. Patrón IndieWeb estándar. */
