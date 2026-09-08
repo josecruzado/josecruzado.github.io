@@ -62,7 +62,10 @@ src/
 
 ## Comandos
 
-Requiere Node `>=22.12.0`.
+Node **24** (Active LTS) — la versión está en `.nvmrc`, que leen `nvm`,
+`fnm` y el CI. `engines.node` declara `>=22.12.0` como mínimo soportado:
+es lo que se garantiza que funciona, no la versión con la que se
+construye. Ambas están verificadas.
 
 | Comando                | Acción                                     |
 | ---------------------- | ------------------------------------------ |
@@ -72,6 +75,7 @@ Requiere Node `>=22.12.0`.
 | `npm run format`       | Aplica Prettier                            |
 | `npm run format:check` | Verifica formato                           |
 | `npm run build`        | Genera build estático en `dist/`           |
+| `npm run verify`       | Comprueba el HTML publicado en `dist/`     |
 | `npm run preview`      | Sirve el build local                       |
 
 ## Contenido
@@ -130,6 +134,37 @@ Validadores útiles:
 
 - https://search.google.com/test/rich-results
 - https://www.opengraph.xyz/
+
+## CI y despliegue
+
+Tres workflows, con `build.yml` como fuente única para que un pull
+request se valide exactamente con las mismas comprobaciones que después
+despliegan:
+
+| Workflow     | Disparador       | Qué hace                                  |
+| ------------ | ---------------- | ----------------------------------------- |
+| `build.yml`  | `workflow_call`  | Prettier, `astro check`, build y `verify` |
+| `ci.yml`     | `pull_request`   | `build.yml` + `npm audit`                 |
+| `deploy.yml` | push a `develop` | `build.yml` + publicación en GitHub Pages |
+
+Detalles que conviene conocer antes de tocarlos:
+
+- **`npm run verify`** revisa el HTML que realmente se publica, que es
+  lo que ni `astro check` ni Prettier miran: CSP sin `unsafe-inline`,
+  JSON-LD válido, canonical y hreflang alineados, CSS inline, landmarks
+  de accesibilidad, `lastmod` y `llms.txt`. Si falla, el output cambió
+  aunque el build pasara.
+- **La caché de fuentes** (`node_modules/.astro/fonts`) se restaura
+  _después_ de `npm ci`, porque `npm ci` borra `node_modules`. Sin ella
+  cada despliegue rebaja las fuentes del CDN de fontsource.
+- **`npm audit` corre solo en pull requests.** Una advertencia nueva debe
+  frenar una actualización de dependencias, no un cambio de contenido
+  urgente que no la introdujo.
+- **`allowScripts`** en `package.json` aprueba explícitamente los scripts
+  de instalación de `esbuild` (enlaza su binario de plataforma) y
+  `fsevents` (file watching en macOS, ausente en Linux). npm 11 los
+  bloquea por defecto; aprobarlos de forma consciente evita convivir con
+  un aviso permanente en cada instalación.
 
 ## Historial de decisiones
 

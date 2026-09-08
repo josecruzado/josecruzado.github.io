@@ -444,6 +444,64 @@ Chromium con Playwright. Mobile 390x844 salvo donde se indique.
 
 ---
 
+## Fase 6 — CI y despliegue
+
+Añadida después de cerrar las cinco fases iniciales. La auditoría se
+centró en `src/`, y el pipeline había quedado sin revisar pese a que dos
+de los cambios lo afectaban directamente (la caché de fuentes y la subida
+a Astro 7).
+
+### [x] G1 · Ningún workflow validaba los pull requests
+
+El único workflow se disparaba con el push a `develop`, es decir DESPUÉS
+de mergear. Los PRs de Dependabot llegaban a develop sin que nada los
+hubiera compilado.
+
+**Solución.** `build.yml` reutilizable como fuente única, invocado por
+`ci.yml` (pull requests) y `deploy.yml` (publicación).
+
+### [x] G2 · `npm ci` se ejecutaba dos veces
+
+Los jobs `quality` y `build` instalaban por separado, y el segundo
+dependía del primero, así que además era secuencial. Unificados.
+
+### [x] G3 · Sin caché de fuentes
+
+La contrapartida anotada al migrar a la Fonts API (B2): `npm ci` borra
+`node_modules/.astro/fonts`, así que cada despliegue rebajaba las fuentes
+del CDN. Resuelto con `actions/cache` restaurado _después_ de `npm ci`.
+
+### [x] G4 · Permisos por encima de lo necesario
+
+`pages: write` e `id-token: write` estaban a nivel de workflow y los
+heredaban los jobs de calidad. Trasladados al job de deploy.
+
+### [x] G5 · Actions varias majors atrás
+
+checkout v4→v7, setup-node v4→v7, upload-pages-artifact v3→v5,
+deploy-pages v4→v5, más cache v6. Los cambios de ruptura de checkout
+afectan a `pull_request_target` y `workflow_run`, no usados aquí.
+
+### [x] G6 · Node 22 está en Maintenance LTS
+
+Fijado Node 24 (Active LTS) vía `.nvmrc`, leído por setup-node, nvm y
+fnm. `engines.node` sigue en `>=22.12.0` como mínimo soportado; ambas
+versiones verificadas.
+
+### [x] G7 · Scripts de instalación sin revisar
+
+npm 11 los bloquea por defecto y avisa en cada `npm ci`. Revisados y
+aprobados de forma explícita `esbuild` (binario de plataforma) y
+`fsevents` (macOS, ausente en Linux). `sharp` no los necesita.
+
+### [x] G8 · Nada verificaba el HTML publicado
+
+`astro check` y Prettier no miran `dist/`. Varias decisiones de esta rama
+podrían deshacerse sin que el build fallara. `npm run verify` comprueba
+diez invariantes del output, y se probó que falla cuando debe.
+
+---
+
 ## Fuera de alcance (decidido, no olvidado)
 
 | Punto                 | Motivo                                                                                                                                                                     |
