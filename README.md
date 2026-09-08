@@ -138,6 +138,10 @@ Incluye:
   `src/lib/api-contract.ts`, así que la documentación no puede divergir de
   lo que se sirve. El YAML se serializa y resalta en build
   (`src/lib/yaml.ts`) para no depender de Shiki, incompatible con el CSP.
+  La sección permite ejecutar cada endpoint —mismo origen, así que el CSP
+  lo admite sin ampliar `connect-src`— y muestra estado, cabeceras y el
+  cuerpo real truncado a 40 líneas, para que el coste sea constante
+  independientemente del tamaño de la respuesta.
 - `/cv.json` con el CV en [JSON Resume](https://jsonresume.org), un esquema
   publicado que herramientas de terceros y ATS saben leer. Se genera desde
   las mismas fuentes y se anuncia con `rel="alternate"` en el `<head>`.

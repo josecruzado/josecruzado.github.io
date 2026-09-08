@@ -93,12 +93,66 @@ const escapeHtml = (text: string) =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /**
- * Envuelve cada token en un `<span>` con su clase. El coloreado real lo
- * deciden los tokens de CSS, de modo que el resaltado respeta el tema.
+ * Localiza el rango de líneas de cada `path` dentro del YAML ya serializado.
+ *
+ * Permite que la vista del contrato resalte en el panel izquierdo las líneas
+ * del endpoint sobre el que está el cursor. Se calcula en build recorriendo
+ * la salida, no parseando de nuevo: el serializador es determinista, así que
+ * basta con encontrar las claves bajo `paths:` y ver dónde acaba cada una.
+ */
+export function pathLineRanges(source: string): Record<string, [number, number]> {
+  const lines = source.split('\n');
+  const ranges: Record<string, [number, number]> = {};
+  const starts: Array<{ path: string; line: number }> = [];
+
+  let insidePaths = false;
+  lines.forEach((line, index) => {
+    if (/^paths:\s*$/.test(line)) {
+      insidePaths = true;
+      return;
+    }
+    if (insidePaths && /^\S/.test(line)) insidePaths = false;
+    if (!insidePaths) return;
+    const key = line.match(/^ {2}'?(\/[^':]*)'?:\s*$/);
+    if (key) starts.push({ path: key[1], line: index });
+  });
+
+  starts.forEach((entry, i) => {
+    const next = starts[i + 1];
+    let end = next ? next.line - 1 : lines.length - 1;
+    if (!next) {
+      // Último path: acaba donde reaparece una clave de primer nivel.
+      for (let i = entry.line + 1; i < lines.length; i += 1) {
+        if (/^\S/.test(lines[i])) {
+          end = i - 1;
+          break;
+        }
+      }
+    }
+    ranges[entry.path] = [entry.line, end];
+  });
+
+  return ranges;
+}
+
+/**
+ * Envuelve cada token en un `<span>` con su clase, y cada línea en un
+ * `<span class="line" data-line="N">` para poder direccionarlas desde la
+ * vista del contrato. El coloreado lo deciden los tokens de CSS, de modo
+ * que el resaltado respeta el tema.
+ *
+ * Las líneas se emiten sin `\n` entre ellas: son `display: block`, así el
+ * resaltado ocupa el ancho completo y el copiado conserva los saltos.
  */
 export function highlightYaml(source: string): string {
   return source
     .split('\n')
+    .map((line, index) => `<span class="line" data-line="${index}">${token(line)}</span>`)
+    .join('');
+}
+
+function token(line: string): string {
+  return [line]
     .map((line) => {
       const entry = line.match(/^(\s*)(- )?([A-Za-z_$'][^:]*?)(:)(\s*)(.*)$/);
       if (entry) {
@@ -121,7 +175,7 @@ export function highlightYaml(source: string): string {
       }
       return value(line, true);
     })
-    .join('\n');
+    .join('');
 }
 
 function value(raw: string, keepIndent = false): string {
