@@ -93,46 +93,35 @@ const escapeHtml = (text: string) =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /**
- * Localiza el rango de líneas de cada `path` dentro del YAML ya serializado.
+ * Calcula los bloques plegables del YAML, al modo del editor de Swagger.
  *
- * Permite que la vista del contrato resalte en el panel izquierdo las líneas
- * del endpoint sobre el que está el cursor. Se calcula en build recorriendo
- * la salida, no parseando de nuevo: el serializador es determinista, así que
- * basta con encontrar las claves bajo `paths:` y ver dónde acaba cada una.
+ * Un bloque es una clave sin valor cuya siguiente línea está más indentada;
+ * se extiende hasta la última línea que siga por debajo de esa indentación.
+ * Se limita a los tres primeros niveles: es la granularidad útil —`info`,
+ * `paths`, cada endpoint, `components`, cada schema— y evita sembrar el
+ * panel de controles en cada línea suelta.
+ *
+ * Todo se resuelve en build; el cliente solo conmuta clases.
  */
-export function pathLineRanges(source: string): Record<string, [number, number]> {
-  const lines = source.split('\n');
-  const ranges: Record<string, [number, number]> = {};
-  const starts: Array<{ path: string; line: number }> = [];
+function foldRanges(lines: readonly string[]): Map<number, number> {
+  const folds = new Map<number, number>();
+  const indentOf = (line: string) => line.match(/^ */)?.[0].length ?? 0;
 
-  let insidePaths = false;
   lines.forEach((line, index) => {
-    if (/^paths:\s*$/.test(line)) {
-      insidePaths = true;
-      return;
+    if (!/:\s*$/.test(line)) return;
+    const indent = indentOf(line);
+    if (indent > 4) return;
+
+    let end = index;
+    for (let i = index + 1; i < lines.length; i += 1) {
+      if (lines[i].trim() === '') continue;
+      if (indentOf(lines[i]) <= indent) break;
+      end = i;
     }
-    if (insidePaths && /^\S/.test(line)) insidePaths = false;
-    if (!insidePaths) return;
-    const key = line.match(/^ {2}'?(\/[^':]*)'?:\s*$/);
-    if (key) starts.push({ path: key[1], line: index });
+    if (end > index) folds.set(index, end);
   });
 
-  starts.forEach((entry, i) => {
-    const next = starts[i + 1];
-    let end = next ? next.line - 1 : lines.length - 1;
-    if (!next) {
-      // Último path: acaba donde reaparece una clave de primer nivel.
-      for (let i = entry.line + 1; i < lines.length; i += 1) {
-        if (/^\S/.test(lines[i])) {
-          end = i - 1;
-          break;
-        }
-      }
-    }
-    ranges[entry.path] = [entry.line, end];
-  });
-
-  return ranges;
+  return folds;
 }
 
 /**
@@ -145,9 +134,19 @@ export function pathLineRanges(source: string): Record<string, [number, number]>
  * resaltado ocupa el ancho completo y el copiado conserva los saltos.
  */
 export function highlightYaml(source: string): string {
-  return source
-    .split('\n')
-    .map((line, index) => `<span class="line" data-line="${index}">${token(line)}</span>`)
+  const lines = source.split('\n');
+  const folds = foldRanges(lines);
+
+  return lines
+    .map((line, index) => {
+      const end = folds.get(index);
+      const attrs = end === undefined ? '' : ` data-fold-end="${end}"`;
+      const toggle =
+        end === undefined
+          ? ''
+          : `<button type="button" class="fold" data-fold="${index}" aria-expanded="true" aria-label="Plegar bloque"></button>`;
+      return `<span class="line" data-line="${index}"${attrs}>${toggle}${token(line)}</span>`;
+    })
     .join('');
 }
 

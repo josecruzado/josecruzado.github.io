@@ -104,6 +104,7 @@ export default defineConfig({
           'braces',
           'briefcase',
           'chart-no-axes-combined',
+          'chevron-down',
           'cloud',
           'code-2',
           'copy',

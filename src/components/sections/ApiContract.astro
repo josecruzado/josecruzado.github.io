@@ -16,14 +16,11 @@ import SectionHeader from '../ui/SectionHeader.astro';
 import Icon from '../ui/Icon.astro';
 import { API_CONTRACT } from '../../lib/api-contract';
 import { SITE } from '../../lib/site';
-import { highlightYaml, pathLineRanges, toYaml } from '../../lib/yaml';
+import { highlightYaml, toYaml } from '../../lib/yaml';
 
 const yaml = toYaml(API_CONTRACT);
 const highlighted = highlightYaml(yaml);
 const lineCount = yaml.split('\n').length;
-// Rangos de línea por endpoint: los usa la vista para resaltar en el panel
-// izquierdo el fragmento del contrato que corresponde a cada operación.
-const lineRanges = pathLineRanges(yaml);
 
 /** Aplana paths → operaciones para que el panel derecho las liste. */
 const operations = Object.entries(API_CONTRACT.paths).flatMap(([path, item]) =>
@@ -38,7 +35,6 @@ const operations = Object.entries(API_CONTRACT.paths).flatMap(([path, item]) =>
       operationId: operation.operationId,
       // El comando se arma en build; en el cliente solo queda el copiado.
       curl: `curl -s ${SITE.url}${path}`,
-      lines: lineRanges[path] ?? null,
       status,
       statusText: detail.description,
       mediaType: Object.keys(detail.content)[0],
@@ -114,68 +110,69 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
           <ul class="contract__ops" role="list">
             {
               operations.map((op) => (
-                <li
-                  class="op"
-                  data-op={op.path}
-                  data-from={op.lines ? op.lines[0] : undefined}
-                  data-to={op.lines ? op.lines[1] : undefined}
-                >
-                  <div class="op__head">
-                    <span class="op__method">{op.method}</span>
-                    <code class="op__path">{op.path}</code>
-                  </div>
-                  <p class="op__summary">{op.summary}</p>
-                  <p class="op__desc">{op.description}</p>
-                  <div class="op__response">
-                    <span class="op__status">{op.status}</span>
-                    <span class="op__media">{op.mediaType}</span>
-                    <span class="op__status-text">{op.statusText}</span>
-                  </div>
-                  <div class="op__curl">
-                    <code>{op.curl}</code>
-                    <button
-                      type="button"
-                      class="op__copy"
-                      data-copy={op.curl}
-                      aria-label={`Copiar comando cURL de ${op.path}`}
-                    >
-                      <Icon name="lucide:copy" size={12} />
-                    </button>
-                  </div>
+                <li>
+                  <details class="op" open>
+                    <summary class="op__head">
+                      <span class="op__method">{op.method}</span>
+                      <code class="op__path">{op.path}</code>
+                      <span class="op__head-summary">{op.summary}</span>
+                      <Icon name="lucide:chevron-down" size={14} class="op__chevron" />
+                    </summary>
+                    <div class="op__body">
+                      <p class="op__desc">{op.description}</p>
+                      <div class="op__response">
+                        <span class="op__status">{op.status}</span>
+                        <span class="op__media">{op.mediaType}</span>
+                        <span class="op__status-text">{op.statusText}</span>
+                      </div>
+                      <div class="op__curl">
+                        <code>{op.curl}</code>
+                        <button
+                          type="button"
+                          class="op__copy"
+                          data-copy={op.curl}
+                          aria-label={`Copiar comando cURL de ${op.path}`}
+                        >
+                          <Icon name="lucide:copy" size={12} />
+                        </button>
+                      </div>
 
-                  <div class="op__run">
-                    <button type="button" class="op__button" data-run={op.path}>
-                      <Icon name="lucide:play" size={13} />
-                      Ejecutar
-                    </button>
-                    <output class="op__result" data-result={op.path} aria-live="polite" />
-                  </div>
+                      <div class="op__run">
+                        <button type="button" class="op__button" data-run={op.path}>
+                          <Icon name="lucide:play" size={13} />
+                          Ejecutar
+                        </button>
+                        <output class="op__result" data-result={op.path} aria-live="polite" />
+                      </div>
 
-                  <div class="response" data-response={op.path} hidden>
-                    <div class="response__bar">
-                      <span class="response__status" data-response-status />
-                      <span class="response__headers" data-response-headers />
+                      <div class="response" data-response={op.path} hidden>
+                        <div class="response__bar">
+                          <span class="response__status" data-response-status />
+                          <span class="response__headers" data-response-headers />
+                        </div>
+                        <pre class="response__body">
+                          <code data-response-body />
+                        </pre>
+                        <p class="response__more" data-response-more hidden>
+                          <a href={op.path} target="_blank" rel="noopener">
+                            Ver respuesta completa
+                            <Icon name="lucide:arrow-up-right" size={12} />
+                          </a>
+                        </p>
+                      </div>
                     </div>
-                    <pre class="response__body">
-                      <code data-response-body />
-                    </pre>
-                    <p class="response__more" data-response-more hidden>
-                      <a href={op.path} target="_blank" rel="noopener">
-                        Ver respuesta completa
-                        <Icon name="lucide:arrow-up-right" size={12} />
-                      </a>
-                    </p>
-                  </div>
+                  </details>
                 </li>
               ))
             }
           </ul>
 
-          <div class="contract__schema">
-            <p class="contract__schema-title">
+          <details class="contract__schema" open>
+            <summary class="contract__schema-title">
               <Icon name="lucide:braces" size={13} />
               Schema · Resume
-            </p>
+              <Icon name="lucide:chevron-down" size={13} class="op__chevron" />
+            </summary>
             <ul class="fields" role="list">
               {
                 schemaFields.map((field) => (
@@ -187,7 +184,7 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
                 ))
               }
             </ul>
-          </div>
+          </details>
         </div>
       </div>
     </div>
@@ -314,53 +311,42 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
     if (collapseLabel) {
       collapseLabel.textContent = collapsed ? 'Expandir el contrato' : 'Contraer el contrato';
     }
-    // Con el contrato plegado no hay líneas visibles que resaltar.
-    if (collapsed) clearHighlight();
   });
 
-  // --------------------------------------- Vínculo entre los dos paneles
-  // Al enfocar o pasar por encima de una operación, el contrato de la
-  // izquierda resalta y desplaza sus líneas. Es lo que hacen las
-  // herramientas de documentación para que ambos lados se lean como uno.
-  const code = document.querySelector<HTMLElement>('.contract__code');
-  const scroller = document.querySelector<HTMLElement>('.contract__pane--spec .contract__scroll');
-  const lines = code ? Array.from(code.querySelectorAll<HTMLElement>('.line')) : [];
-  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  // -------------------------------------- Plegado de bloques del contrato
+  // Como en el editor de Swagger: cada clave con hijos se pliega. Los
+  // rangos se calculan en build (ver lib/yaml.ts); aquí solo se ocultan
+  // las líneas del bloque y se marca el estado.
+  //
+  // NO hay seguimiento automático entre paneles: el desplazamiento del
+  // contrato lo decide quien lee, no la vista.
+  const lines = Array.from(document.querySelectorAll<HTMLElement>('.contract__code .line'));
 
-  function clearHighlight() {
-    for (const line of lines) line.classList.remove('is-active');
-  }
+  for (const toggle of document.querySelectorAll<HTMLButtonElement>('[data-fold]')) {
+    toggle.addEventListener('click', () => {
+      const line = toggle.closest<HTMLElement>('.line');
+      const from = Number(toggle.dataset.fold);
+      const to = Number(line?.dataset.foldEnd);
+      if (!line || Number.isNaN(from) || Number.isNaN(to)) return;
 
-  function highlightRange(from: number, to: number, scroll: boolean) {
-    clearHighlight();
-    for (let i = from; i <= to && i < lines.length; i += 1) lines[i]?.classList.add('is-active');
-    if (!scroll || !scroller || !lines[from]) return;
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    scroller.scrollTo({
-      top: Math.max(0, lines[from].offsetTop - scroller.clientHeight / 3),
-      behavior: prefersReducedMotion ? 'auto' : 'smooth',
-    });
-  }
+      const folded = line.toggleAttribute('data-folded');
+      toggle.setAttribute('aria-expanded', String(!folded));
+      toggle.setAttribute('aria-label', folded ? 'Desplegar bloque' : 'Plegar bloque');
 
-  if (lines.length > 0) {
-    for (const card of document.querySelectorAll<HTMLElement>('[data-op][data-from]')) {
-      const from = Number(card.dataset.from);
-      const to = Number(card.dataset.to);
-      if (Number.isNaN(from) || Number.isNaN(to)) continue;
-
-      // El puntero fino solo resalta; el foco de teclado además desplaza,
-      // porque quien navega con Tab no puede mirar los dos lados a la vez.
-      if (finePointer) {
-        card.addEventListener('pointerenter', () => highlightRange(from, to, true), {
-          passive: true,
-        });
-        card.addEventListener('pointerleave', clearHighlight, { passive: true });
+      for (let i = from + 1; i <= to && i < lines.length; i += 1) {
+        const child = lines[i];
+        if (!child) continue;
+        if (folded) {
+          child.dataset.hiddenBy = String(from);
+          child.hidden = true;
+        } else if (child.dataset.hiddenBy === String(from)) {
+          // Solo se reabre lo que ESTE bloque ocultó: si dentro había otro
+          // plegado, sus líneas siguen ocultas por su propio marcador.
+          delete child.dataset.hiddenBy;
+          child.hidden = false;
+        }
       }
-      card.addEventListener('focusin', () => highlightRange(from, to, true));
-      card.addEventListener('focusout', (event) => {
-        if (!card.contains(event.relatedTarget as Node)) clearHighlight();
-      });
-    }
+    });
   }
 </script>
 
@@ -446,13 +432,59 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
     transition: background-color var(--duration-fast) var(--ease-out);
   }
 
-  .contract__code :global(.line.is-active) {
-    background: var(--color-accent-soft);
-    box-shadow: inset 2px 0 0 0 var(--color-accent-text);
+  /* Hueco a la izquierda para el control de plegado. */
+  .contract__code :global(.line) {
+    position: relative;
+    padding-left: calc(var(--space-4) + 0.9rem);
+  }
+
+  .contract__code :global(.line[hidden]) {
+    display: none;
+  }
+
+  /* El control solo aparece al pasar por el código o al recibir foco: en
+     reposo el contrato se lee limpio, sin una columna de flechas. */
+  .contract__code :global(.fold) {
+    position: absolute;
+    left: var(--space-4);
+    top: 0.15em;
+    width: 0.9rem;
+    height: 1.1em;
+    padding: 0;
+    color: var(--color-fg-faint);
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--ease-out);
+  }
+
+  .contract__code:hover :global(.fold),
+  .contract__code :global(.fold:focus-visible),
+  .contract__code :global(.line[data-folded] .fold) {
+    opacity: 1;
+  }
+
+  .contract__code :global(.fold)::before {
+    content: '▾';
+    display: block;
+    line-height: 1;
+    font-size: 0.75rem;
+  }
+
+  .contract__code :global(.line[data-folded] .fold)::before {
+    content: '▸';
+  }
+
+  .contract__code :global(.line[data-folded]) {
+    background: var(--color-surface-hover);
+  }
+
+  .contract__code :global(.line[data-folded])::after {
+    content: ' …';
+    color: var(--color-fg-faint);
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .contract__code :global(.line) {
+    .contract__code :global(.line),
+    .contract__code :global(.fold) {
       transition: none;
     }
   }
@@ -616,11 +648,58 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
     background: var(--color-bg);
   }
 
+  /* Operación plegable con <details> nativo: sin JavaScript, accesible por
+     teclado y con el estado gestionado por el navegador. */
   .op__head {
     display: flex;
     align-items: center;
     gap: var(--space-3);
     flex-wrap: wrap;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .op__head::-webkit-details-marker {
+    display: none;
+  }
+
+  .op__head:focus-visible {
+    outline: 2px solid var(--color-accent-text);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
+  }
+
+  .op__head-summary {
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .op[open] .op__head-summary {
+    display: none;
+  }
+
+  .op__chevron {
+    margin-left: auto;
+    color: var(--color-fg-subtle);
+    transition: transform var(--duration-fast) var(--ease-out);
+  }
+
+  .op[open] .op__chevron,
+  .contract__schema[open] .op__chevron {
+    transform: rotate(180deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .op__chevron {
+      transition: none;
+    }
+  }
+
+  .op__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
   }
 
   .op__method {
@@ -846,6 +925,9 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
   }
 
   .contract__schema-title {
+    cursor: pointer;
+    list-style: none;
+    width: 100%;
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
@@ -855,6 +937,16 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
     letter-spacing: 0.1em;
     color: var(--color-fg-subtle);
     margin-bottom: var(--space-3);
+  }
+
+  .contract__schema-title::-webkit-details-marker {
+    display: none;
+  }
+
+  .contract__schema-title:focus-visible {
+    outline: 2px solid var(--color-accent-text);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
   }
 
   .fields {
