@@ -47,6 +47,7 @@ export const GET: APIRoute = async () => {
 
   const { author, social } = SITE;
   const degree = EDUCATION.find((item) => item.type === 'degree');
+  const degreePeriod = splitPeriod(degree?.datetime);
   const modified = lastCommitDate();
 
   const resume = {
@@ -96,12 +97,8 @@ export const GET: APIRoute = async () => {
             // el sistema peruano, y es el valor que reconocen LinkedIn y las
             // herramientas del ecosistema JSON Resume.
             studyType: "Engineer's Degree",
-            ...(splitPeriod(degree.datetime).start
-              ? { startDate: splitPeriod(degree.datetime).start }
-              : {}),
-            ...(splitPeriod(degree.datetime).end
-              ? { endDate: splitPeriod(degree.datetime).end }
-              : {}),
+            ...(degreePeriod.start ? { startDate: degreePeriod.start } : {}),
+            ...(degreePeriod.end ? { endDate: degreePeriod.end } : {}),
           },
         ]
       : [],

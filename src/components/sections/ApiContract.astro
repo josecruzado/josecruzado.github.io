@@ -22,17 +22,25 @@ const yaml = toYaml(API_CONTRACT);
 const highlighted = highlightYaml(yaml);
 const lineCount = yaml.split('\n').length;
 
+/**
+ * Forma de una respuesta del contrato.
+ *
+ * `as const` en API_CONTRACT da los tipos literales que el resto del archivo
+ * aprovecha, pero Object.entries colapsa a `unknown` los valores heterogéneos
+ * de `responses`. Nombrar la forma deja la aserción acotada y legible en vez
+ * de un cast suelto en medio de la expresión.
+ */
+type ResponseDetail = { description: string; content: Record<string, unknown> };
+
 /** Aplana paths → operaciones para que el panel derecho las liste. */
 const operations = Object.entries(API_CONTRACT.paths).flatMap(([path, item]) =>
   Object.entries(item).map(([method, operation]) => {
-    const response = Object.entries(operation.responses)[0];
-    const [status, detail] = response as [string, { description: string; content: object }];
+    const [status, detail] = Object.entries(operation.responses)[0] as [string, ResponseDetail];
     return {
       path,
       method: method.toUpperCase(),
       summary: operation.summary,
       description: operation.description,
-      operationId: operation.operationId,
       // El comando se arma en build; en el cliente solo queda el copiado.
       curl: `curl -s ${SITE.url}${path}`,
       status,
@@ -192,13 +200,12 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
 </Section>
 
 <script>
+  import { escapeHtml } from '../../lib/html';
+
   // Todo lo de aquí ocurre BAJO DEMANDA: nada se ejecuta al cargar la página.
   // La sección vive además tras `content-visibility: auto`, así que ni
   // siquiera se pinta hasta acercarse al viewport.
   const MAX_LINES = 40;
-
-  const escapeHtml = (text: string) =>
-    text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   const formatBytes = (bytes: number) =>
     bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
@@ -263,11 +270,11 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
           // Se trunca a propósito: volcar 15 KB de JSON crearía miles de
           // nodos y el coste dejaría de ser constante. El enlace de abajo
           // lleva a la respuesta íntegra.
-          const lines = body.split('\n');
-          const shown = lines.slice(0, MAX_LINES).join('\n');
+          const bodyLines = body.split('\n');
+          const shown = bodyLines.slice(0, MAX_LINES).join('\n');
           const isJson = (response.headers.get('content-type') ?? '').includes('json');
           bodyEl.innerHTML = isJson ? highlightJson(shown) : escapeHtml(shown);
-          if (moreEl) moreEl.hidden = lines.length <= MAX_LINES;
+          if (moreEl) moreEl.hidden = bodyLines.length <= MAX_LINES;
         }
 
         panel.hidden = false;
@@ -320,7 +327,7 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
   //
   // NO hay seguimiento automático entre paneles: el desplazamiento del
   // contrato lo decide quien lee, no la vista.
-  const lines = Array.from(document.querySelectorAll<HTMLElement>('.contract__code .line'));
+  const codeLines = Array.from(document.querySelectorAll<HTMLElement>('.contract__code .line'));
 
   for (const toggle of document.querySelectorAll<HTMLButtonElement>('[data-fold]')) {
     toggle.addEventListener('click', () => {
@@ -333,8 +340,8 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
       toggle.setAttribute('aria-expanded', String(!folded));
       toggle.setAttribute('aria-label', folded ? 'Desplegar bloque' : 'Plegar bloque');
 
-      for (let i = from + 1; i <= to && i < lines.length; i += 1) {
-        const child = lines[i];
+      for (let i = from + 1; i <= to && i < codeLines.length; i += 1) {
+        const child = codeLines[i];
         if (!child) continue;
         if (folded) {
           child.dataset.hiddenBy = String(from);
@@ -451,7 +458,10 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
     width: 0.9rem;
     height: 1.1em;
     padding: 0;
-    color: var(--color-fg-faint);
+    /* fg-subtle y no fg-faint: es un control interactivo y SC 1.4.11 exige
+       3:1. fg-faint (2,42:1) queda por debajo — es el token que tokens.css
+       restringe a separadores decorativos. */
+    color: var(--color-fg-subtle);
     opacity: 0;
     transition: opacity var(--duration-fast) var(--ease-out);
   }
@@ -479,7 +489,9 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
 
   .contract__code :global(.line[data-folded])::after {
     content: ' …';
-    color: var(--color-fg-faint);
+    /* Señala que hay contenido plegado, así que informa: no puede quedarse
+       en el token reservado a decoración. */
+    color: var(--color-fg-subtle);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -517,7 +529,9 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
     color: var(--color-success);
   }
   .contract__code :global(.tok-punct) {
-    color: var(--color-fg-faint);
+    /* La puntuación se atenúa como en cualquier editor, pero sigue siendo
+       texto: fg-subtle la deja de-enfatizada y por encima del mínimo. */
+    color: var(--color-fg-subtle);
   }
 
   /* Plegado del contrato: al contraer, el panel izquierdo se reduce a su
@@ -718,11 +732,6 @@ const schemaFields = Object.entries(API_CONTRACT.components.schemas.Resume.prope
     font-family: var(--font-mono);
     font-size: var(--text-sm);
     color: var(--color-fg);
-  }
-
-  .op__summary {
-    font-size: var(--text-sm);
-    color: var(--color-fg-muted);
   }
 
   .op__desc {

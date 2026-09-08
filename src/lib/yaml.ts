@@ -14,6 +14,8 @@
  * documento OpenAPI: mapas, secuencias, escalares y bloques plegados.
  */
 
+import { escapeHtml } from './html';
+
 type Yaml = string | number | boolean | null | readonly Yaml[] | { readonly [k: string]: Yaml };
 
 const PLAIN_KEY = /^[A-Za-z_$][\w$-]*$/;
@@ -89,9 +91,6 @@ export function toYaml(value: Yaml, indent = 0): string {
     .join('\n');
 }
 
-const escapeHtml = (text: string) =>
-  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
 /**
  * Calcula los bloques plegables del YAML, al modo del editor de Swagger.
  *
@@ -151,30 +150,24 @@ export function highlightYaml(source: string): string {
 }
 
 function token(line: string): string {
-  return [line]
-    .map((line) => {
-      const entry = line.match(/^(\s*)(- )?([A-Za-z_$'][^:]*?)(:)(\s*)(.*)$/);
-      if (entry) {
-        const [, space, dash, key, colon, gap, rest] = entry;
-        return (
-          escapeHtml(space) +
-          (dash ? `<span class="tok-punct">${escapeHtml(dash)}</span>` : '') +
-          `<span class="tok-key">${escapeHtml(key)}</span>` +
-          `<span class="tok-punct">${colon}</span>` +
-          escapeHtml(gap) +
-          value(rest)
-        );
-      }
-      const item = line.match(/^(\s*)(- )(.*)$/);
-      if (item) {
-        const [, space, dash, rest] = item;
-        return (
-          escapeHtml(space) + `<span class="tok-punct">${escapeHtml(dash)}</span>` + value(rest)
-        );
-      }
-      return value(line, true);
-    })
-    .join('');
+  const entry = line.match(/^(\s*)(- )?([A-Za-z_$'][^:]*?)(:)(\s*)(.*)$/);
+  if (entry) {
+    const [, space, dash, key, colon, gap, rest] = entry;
+    return (
+      escapeHtml(space) +
+      (dash ? `<span class="tok-punct">${escapeHtml(dash)}</span>` : '') +
+      `<span class="tok-key">${escapeHtml(key)}</span>` +
+      `<span class="tok-punct">${colon}</span>` +
+      escapeHtml(gap) +
+      value(rest)
+    );
+  }
+  const item = line.match(/^(\s*)(- )(.*)$/);
+  if (item) {
+    const [, space, dash, rest] = item;
+    return escapeHtml(space) + `<span class="tok-punct">${escapeHtml(dash)}</span>` + value(rest);
+  }
+  return value(line, true);
 }
 
 function value(raw: string, keepIndent = false): string {
